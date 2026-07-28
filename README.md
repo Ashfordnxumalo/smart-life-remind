@@ -1,73 +1,57 @@
-# Welcome to your Lovable project
+# SmartRemind
 
-## Project info
+An intelligent reminder management app — appointments, documents, subscriptions, and personal events, with optional location-based reminders and family/team member assignment.
 
-**URL**: https://lovable.dev/projects/63c851cd-15ad-4fe9-aaaf-e4be5c7fb51a
+## Backend
 
-## How can I edit this code?
+This project runs on **Firebase**: Firebase Authentication (email/password), Cloud Firestore, and Cloud Functions. It does not use Supabase, despite some earlier scaffolding history — see `firestore.rules`, `firestore.indexes.json`, and `functions/` for the backend definition.
 
-There are several ways of editing your application.
+### First-time setup
 
-**Use Lovable**
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com).
+2. Enable **Email/Password** sign-in under Authentication → Sign-in method.
+3. Create a **Firestore** database (production mode).
+4. Register a **Web app** in the project (Project settings → General → Your apps), copy the config, and fill in `.env` (copy `.env.example` first):
+   ```sh
+   cp .env.example .env
+   ```
+5. Deploy the security rules and indexes:
+   ```sh
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
+6. To deploy Cloud Functions (`functions/`), the project needs the **Blaze (pay-as-you-go)** plan:
+   ```sh
+   cd functions && npm install && cd ..
+   firebase deploy --only functions
+   ```
+   Without this, most of the app works (auth, reminders, settings, location), but family-member add/remove and the reminder-assignment notification will fail — those specifically require the deployed callables.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/63c851cd-15ad-4fe9-aaaf-e4be5c7fb51a) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
 ## What technologies are used for this project?
-
-This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Firebase (Auth, Firestore, Cloud Functions)
 
-## How can I deploy this project?
+## How can I edit this code?
 
-Simply open [Lovable](https://lovable.dev/projects/63c851cd-15ad-4fe9-aaaf-e4be5c7fb51a) and click on Share -> Publish.
+**Use your preferred IDE**
 
-## Can I connect a custom domain to my Lovable project?
+Clone this repo, install dependencies, and run `npm run dev`.
 
-Yes, you can!
+**Edit a file directly in GitHub**
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Navigate to the file, click the pencil icon, make your changes, and commit.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+**Use GitHub Codespaces**
+
+From the repo's main page, click Code → Codespaces → New codespace.
