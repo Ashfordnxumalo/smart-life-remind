@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile as updateAuthProfile,
+} from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import { auth } from "@/lib/firebase";
+import { createProfile } from "@/lib/firestore/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,96 +15,81 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User, Session } from '@supabase/supabase-js';
+import { useAuth } from "@/hooks/useAuth";
+
+const authErrorMessage = (error: unknown): string => {
+  if (error instanceof FirebaseError) {
+    switch (error.code) {
+      case "auth/invalid-credential":
+      case "auth/wrong-password":
+      case "auth/user-not-found":
+        return "Invalid email or password.";
+      case "auth/email-already-in-use":
+        return "An account with this email already exists.";
+      case "auth/weak-password":
+        return "Password should be at least 6 characters.";
+      default:
+        return error.message;
+    }
+  }
+  return "Something went wrong. Please try again.";
+};
 
 const AuthPage = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [planType, setPlanType] = useState<'family' | 'business'>('family');
   const navigate = useNavigate();
+  const loading = authLoading || submitting;
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        if (session?.user) {
-          navigate("/");
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      if (session?.user) {
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
 
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          plan_type: planType,
-        }
-      }
-    });
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateAuthProfile(credential.user, { displayName: fullName });
+      await createProfile(credential.user.uid, { fullName, email, planType });
 
-    if (error) {
+      toast({
+        title: "Account created! 🎉",
+        description: "Welcome to SmartRemind.",
+      });
+    } catch (error) {
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: authErrorMessage(error),
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link.",
-      });
+    } finally {
+      setSubmitting(false);
     }
-    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
       toast({
         title: "Sign in failed",
-        description: error.message,
+        description: authErrorMessage(error),
         variant: "destructive",
       });
+    } finally {
+      setSubmitting(false);
     }
-    setLoading(false);
   };
 
   if (loading) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, User, Bell, Shield, Palette } from "lucide-react";
+import { Settings, User, Bell, Shield } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getSettings, saveSettings } from "@/lib/firestore/settings";
+import type { UserSettings } from "@/types/reminder";
 import { useToast } from "@/hooks/use-toast";
 
 interface SettingsDialogProps {
@@ -15,21 +17,31 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const DEFAULT_SETTINGS: UserSettings = {
+  theme: "light",
+  pushNotifications: true,
+  emailNotifications: false,
+  locationTracking: true,
+};
+
 export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
-  const [settings, setSettings] = useState({
-    notifications: true,
-    locationTracking: true,
-    emailNotifications: false,
-    theme: "light"
-  });
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (!open || !user) return;
+    getSettings(user.uid)
+      .then(setSettings)
+      .catch(() => setSettings(DEFAULT_SETTINGS));
+  }, [open, user]);
+
   const handleSaveSettings = async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      // Here you would typically save to a user_settings table
-      // For now, we'll just show a success message
+      await saveSettings(user.uid, settings);
       toast({
         title: "Settings saved",
         description: "Your settings have been updated successfully.",
@@ -103,9 +115,9 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                   </p>
                 </div>
                 <Switch
-                  checked={settings.notifications}
-                  onCheckedChange={(checked) => 
-                    setSettings(prev => ({ ...prev, notifications: checked }))
+                  checked={settings.pushNotifications}
+                  onCheckedChange={(checked) =>
+                    setSettings(prev => ({ ...prev, pushNotifications: checked }))
                   }
                 />
               </div>

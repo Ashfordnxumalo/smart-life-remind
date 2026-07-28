@@ -1,32 +1,43 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Clock, AlertTriangle, Calendar } from "lucide-react";
 
-export const QuickStats = () => {
-  const stats = [
+export interface ReminderStats {
+  todayCount: number;
+  weekCount: number;
+  overdueCount: number;
+  completedCount: number;
+}
+
+interface QuickStatsProps {
+  stats: ReminderStats;
+}
+
+export const QuickStats = ({ stats }: QuickStatsProps) => {
+  const items = [
     {
       title: "Today",
-      value: "3",
+      value: stats.todayCount,
       icon: Calendar,
       color: "text-primary",
       bgColor: "bg-primary/10"
     },
     {
-      title: "This Week", 
-      value: "12",
+      title: "This Week",
+      value: stats.weekCount,
       icon: Clock,
       color: "text-category-subscription",
       bgColor: "bg-category-subscription/10"
     },
     {
       title: "Overdue",
-      value: "1",
+      value: stats.overdueCount,
       icon: AlertTriangle,
-      color: "text-destructive", 
+      color: "text-destructive",
       bgColor: "bg-destructive/10"
     },
     {
       title: "Completed",
-      value: "8",
+      value: stats.completedCount,
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10"
@@ -39,7 +50,7 @@ export const QuickStats = () => {
         <CardTitle className="text-lg">Overview</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {stats.map((stat, index) => {
+        {items.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div key={index} className="flex items-center justify-between">

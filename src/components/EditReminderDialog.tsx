@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Clock, FileText, Calendar, CreditCard, Heart, Settings, Users, Bell, MessageCircle, Mail, MapPin } from "lucide-react";
+import { format, parse } from "date-fns";
+import { CalendarIcon, Clock, FileText, Calendar, CreditCard, Heart, Settings, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,71 +11,24 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { LocationPicker } from "@/components/LocationPicker";
-
-interface Reminder {
-  id: string;
-  title: string;
-  category: "appointment" | "document" | "subscription" | "personal" | "custom";
-  date: string;
-  time: string;
-  priority: "low" | "medium" | "high";
-  description: string;
-  completed?: boolean;
-  location?: string;
-  location_lat?: number;
-  location_lng?: number;
-}
+import type { Reminder, ReminderUpdate } from "@/types/reminder";
 
 interface EditReminderDialogProps {
   reminder: Reminder | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdate: (updatedReminder: Reminder) => void;
+  onUpdate: (id: string, data: ReminderUpdate) => void | Promise<void>;
 }
 
 const categories = [
-  {
-    id: "appointment",
-    label: "Appointment",
-    icon: Calendar,
-    color: "category-appointment",
-    description: "Medical visits, meetings, consultations"
-  },
-  {
-    id: "document", 
-    label: "Document",
-    icon: FileText,
-    color: "category-document",
-    description: "Passports, licenses, contracts"
-  },
-  {
-    id: "subscription",
-    label: "Subscription", 
-    icon: CreditCard,
-    color: "category-subscription",
-    description: "Netflix, Spotify, software renewals"
-  },
-  {
-    id: "personal",
-    label: "Personal",
-    icon: Heart,
-    color: "category-personal", 
-    description: "Birthdays, anniversaries, events"
-  },
-  {
-    id: "custom",
-    label: "Custom",
-    icon: Settings,
-    color: "category-custom",
-    description: "Other reminders"
-  }
+  { id: "appointment", label: "Appointment", icon: Calendar, color: "category-appointment", description: "Medical visits, meetings, consultations" },
+  { id: "document", label: "Document", icon: FileText, color: "category-document", description: "Passports, licenses, contracts" },
+  { id: "subscription", label: "Subscription", icon: CreditCard, color: "category-subscription", description: "Netflix, Spotify, software renewals" },
+  { id: "personal", label: "Personal", icon: Heart, color: "category-personal", description: "Birthdays, anniversaries, events" },
+  { id: "custom", label: "Custom", icon: Settings, color: "category-custom", description: "Other reminders" }
 ];
 
 const priorities = [
@@ -93,6 +46,7 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
   const [notes, setNotes] = useState("");
   const [isAllDay, setIsAllDay] = useState(false);
   const [location, setLocation] = useState<{ address: string; latitude: number; longitude: number } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -101,15 +55,15 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
       setSelectedCategory(reminder.category);
       setSelectedPriority(reminder.priority);
       setNotes(reminder.description);
-      setDate(new Date(reminder.date));
-      setTime(reminder.time === "All Day" ? "09:00" : reminder.time);
-      setIsAllDay(reminder.time === "All Day");
-      
-      if (reminder.location && reminder.location_lat && reminder.location_lng) {
+      setDate(parse(reminder.dueDate, "yyyy-MM-dd", new Date()));
+      setTime(reminder.dueTime ?? "09:00");
+      setIsAllDay(reminder.dueTime === null);
+
+      if (reminder.reminderLocation && reminder.locationLat != null && reminder.locationLng != null) {
         setLocation({
-          address: reminder.location,
-          latitude: reminder.location_lat,
-          longitude: reminder.location_lng
+          address: reminder.reminderLocation,
+          latitude: reminder.locationLat,
+          longitude: reminder.locationLng,
         });
       } else {
         setLocation(null);
@@ -119,7 +73,7 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !selectedCategory || !date || !reminder) {
       toast({
         title: "Missing Information",
@@ -129,27 +83,27 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
       return;
     }
 
+    setSubmitting(true);
     try {
-      const updatedReminder: Reminder = {
-        ...reminder,
+      const update: ReminderUpdate = {
         title,
-        category: selectedCategory as any,
-        priority: selectedPriority as any,
+        category: selectedCategory as Reminder["category"],
+        priority: selectedPriority as Reminder["priority"],
         description: notes,
-        date: format(date, 'yyyy-MM-dd'),
-        time: isAllDay ? "All Day" : time,
-        location: location?.address || undefined,
-        location_lat: location?.latitude || undefined,
-        location_lng: location?.longitude || undefined,
+        dueDate: format(date, "yyyy-MM-dd"),
+        dueTime: isAllDay ? null : time,
+        reminderLocation: location?.address || null,
+        locationLat: location?.latitude ?? null,
+        locationLng: location?.longitude ?? null,
       };
 
-      onUpdate(updatedReminder);
-      
+      await onUpdate(reminder.id, update);
+
       toast({
         title: "Reminder Updated! ✅",
         description: `"${title}" has been updated successfully.`
       });
-      
+
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating reminder:', error);
@@ -158,6 +112,8 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
         description: "Failed to update reminder. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -169,7 +125,7 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
             Edit Reminder
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
           {/* Title */}
           <div className="space-y-2">
@@ -194,36 +150,34 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
               {categories.map((category) => {
                 const Icon = category.icon;
                 const isSelected = selectedCategory === category.id;
-                
+
                 return (
-                  <Card 
+                  <div
                     key={category.id}
                     className={cn(
-                      "cursor-pointer transition-all duration-200 hover:shadow-medium",
+                      "cursor-pointer transition-all duration-200 hover:shadow-medium rounded-lg border p-4",
                       isSelected ? "ring-2 ring-primary shadow-medium" : "hover:border-primary/50"
                     )}
                     onClick={() => setSelectedCategory(category.id)}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center",
-                          `bg-${category.color}/10`
-                        )}>
-                          <Icon className={cn("w-5 h-5", `text-${category.color}`)} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm">{category.label}</h3>
-                          <p className="text-xs text-muted-foreground">{category.description}</p>
-                        </div>
-                        {isSelected && (
-                          <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full" />
-                          </div>
-                        )}
+                    <div className="flex items-start space-x-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center",
+                        `bg-${category.color}/10`
+                      )}>
+                        <Icon className={cn("w-5 h-5", `text-${category.color}`)} />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm">{category.label}</h3>
+                        <p className="text-xs text-muted-foreground">{category.description}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -315,7 +269,7 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
               <MapPin className="w-4 h-4 mr-1" />
               Location
             </Label>
-            <LocationPicker 
+            <LocationPicker
               onLocationSelect={setLocation}
               selectedLocation={location}
             />
@@ -339,8 +293,8 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-primary hover:opacity-90">
-              Update Reminder
+            <Button type="submit" className="bg-gradient-primary hover:opacity-90" disabled={submitting}>
+              {submitting ? "Updating..." : "Update Reminder"}
             </Button>
           </div>
         </form>

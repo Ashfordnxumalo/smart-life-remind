@@ -8,26 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReminderCard } from "./ReminderCard";
 import { cn } from "@/lib/utils";
-
-interface Reminder {
-  id: string;
-  title: string;
-  category: "appointment" | "document" | "subscription" | "personal" | "custom";
-  date: string;
-  time: string;
-  priority: "low" | "medium" | "high";
-  description: string;
-  completed?: boolean;
-}
+import type { Reminder } from "@/types/reminder";
 
 interface RemindersListProps {
   reminders: Reminder[];
   title?: string;
   categoryFilter?: string;
-  onComplete?: (id: string) => void;
-  onPostpone?: (id: string) => void;
+  onComplete?: (id: string) => void | Promise<void>;
+  onPostpone?: (id: string) => void | Promise<void>;
   onEdit?: (reminder: Reminder) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }
 
 const categoryLabels = {
@@ -184,10 +174,10 @@ export const RemindersList = ({
 interface RemindersGridProps {
   reminders: Reminder[];
   viewMode: "grid" | "list";
-  onComplete?: (id: string) => void;
-  onPostpone?: (id: string) => void;
+  onComplete?: (id: string) => void | Promise<void>;
+  onPostpone?: (id: string) => void | Promise<void>;
   onEdit?: (reminder: Reminder) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }
 
 const RemindersGrid = ({ reminders, viewMode, onComplete, onPostpone, onEdit, onDelete }: RemindersGridProps) => {

@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useToast } from '@/hooks/use-toast';
+import type { Reminder } from '@/types/reminder';
 
 export const LocationTracker = () => {
   const [watchId, setWatchId] = useState<number | null>(null);
-  const [nearbyReminders, setNearbyReminders] = useState<any[]>([]);
+  const [nearbyReminders, setNearbyReminders] = useState<Reminder[]>([]);
   const { 
     latitude, 
     longitude, 

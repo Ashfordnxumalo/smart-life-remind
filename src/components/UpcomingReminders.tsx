@@ -2,16 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
-
-interface Reminder {
-  id: string;
-  title: string;
-  category: "appointment" | "document" | "subscription" | "personal" | "custom";
-  date: string;
-  time: string;
-  priority: "low" | "medium" | "high";
-  description: string;
-}
+import type { Reminder } from "@/types/reminder";
+import { formatDueTime } from "@/lib/reminderDisplay";
 
 interface UpcomingRemindersProps {
   reminders: Reminder[];
@@ -46,9 +38,9 @@ export const UpcomingReminders = ({ reminders }: UpcomingRemindersProps) => {
             </p>
             <div className="flex items-center text-xs text-muted-foreground">
               <Calendar className="w-3 h-3 mr-1" />
-              <span>{reminder.date}</span>
+              <span>{reminder.dueDate}</span>
               <span className="mx-2">•</span>
-              <span>{reminder.time}</span>
+              <span>{formatDueTime(reminder.dueTime)}</span>
             </div>
           </div>
         ))}

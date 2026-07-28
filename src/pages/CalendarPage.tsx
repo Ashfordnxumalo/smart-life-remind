@@ -1,55 +1,42 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CalendarDays, Plus } from "lucide-react";
+import { ArrowLeft, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
+import { format, isThisMonth, isBefore, parseISO, startOfDay } from "date-fns";
 import { ReminderCard } from "@/components/ReminderCard";
-
-const mockReminders = [
-  {
-    id: "1",
-    title: "Doctor Appointment",
-    category: "appointment" as const,
-    date: "2024-08-27",
-    time: "10:00 AM",
-    priority: "high" as const,
-    description: "Annual checkup with Dr. Smith",
-    completed: false
-  },
-  {
-    id: "2", 
-    title: "Passport Renewal",
-    category: "document" as const,
-    date: "2024-09-15",
-    time: "All Day",
-    priority: "medium" as const,
-    description: "Passport expires in 3 weeks",
-    completed: false
-  },
-  {
-    id: "3",
-    title: "Mom's Birthday",
-    category: "personal" as const,
-    date: "2024-09-10",
-    time: "All Day", 
-    priority: "high" as const,
-    description: "Don't forget to call!",
-    completed: false
-  }
-];
+import { AddReminderDialog } from "@/components/AddReminderDialog";
+import { useReminders } from "@/hooks/useReminders";
 
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const { reminders, loading, complete, postpone, update, remove } = useReminders();
 
-  const handleComplete = (id: string) => {
-    console.log("Completing reminder:", id);
-  };
+  const remindersForSelectedDate = useMemo(() => {
+    if (!selectedDate) return reminders;
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    return reminders.filter((r) => r.dueDate === dateStr);
+  }, [reminders, selectedDate]);
 
-  const handlePostpone = (id: string) => {
-    console.log("Postponing reminder:", id);
-  };
+  const monthCounts = useMemo(() => {
+    const counts: Record<string, number> = { appointment: 0, document: 0, subscription: 0, personal: 0, custom: 0 };
+    let total = 0;
+    let overdue = 0;
+    const today = startOfDay(new Date());
+
+    for (const r of reminders) {
+      const due = parseISO(r.dueDate);
+      if (isThisMonth(due)) {
+        counts[r.category] = (counts[r.category] ?? 0) + 1;
+        total += 1;
+      }
+      if (!r.completed && isBefore(due, today)) overdue += 1;
+    }
+
+    return { counts, total, overdue };
+  }, [reminders]);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -72,17 +59,14 @@ export default function CalendarPage() {
                 </h1>
               </div>
             </div>
-            <Button className="bg-gradient-primary text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Reminder
-            </Button>
+            <AddReminderDialog />
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Calendar Section */}
           <div className="lg:col-span-1">
             <Card className="shadow-soft">
@@ -102,15 +86,15 @@ export default function CalendarPage() {
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>Total Reminders</span>
-                    <Badge variant="secondary">12</Badge>
+                    <Badge variant="secondary">{reminders.length}</Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span>This Month</span>
-                    <Badge className="bg-primary/10 text-primary">8</Badge>
+                    <Badge className="bg-primary/10 text-primary">{monthCounts.total}</Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span>Overdue</span>
-                    <Badge className="bg-destructive/10 text-destructive">2</Badge>
+                    <Badge className="bg-destructive/10 text-destructive">{monthCounts.overdue}</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -126,15 +110,23 @@ export default function CalendarPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockReminders.map((reminder) => (
-                  <ReminderCard 
-                    key={reminder.id} 
-                    reminder={reminder}
-                    variant="compact"
-                    onComplete={handleComplete}
-                    onPostpone={handlePostpone}
-                  />
-                ))}
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Loading reminders...</p>
+                ) : remindersForSelectedDate.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No reminders for this date.</p>
+                ) : (
+                  remindersForSelectedDate.map((reminder) => (
+                    <ReminderCard
+                      key={reminder.id}
+                      reminder={reminder}
+                      variant="compact"
+                      onComplete={complete}
+                      onPostpone={postpone}
+                      onEdit={update}
+                      onDelete={remove}
+                    />
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -146,19 +138,19 @@ export default function CalendarPage() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-category-appointment/10 rounded-lg">
-                    <div className="text-2xl font-bold text-category-appointment">5</div>
+                    <div className="text-2xl font-bold text-category-appointment">{monthCounts.counts.appointment}</div>
                     <div className="text-sm text-muted-foreground">Appointments</div>
                   </div>
                   <div className="text-center p-4 bg-category-document/10 rounded-lg">
-                    <div className="text-2xl font-bold text-category-document">3</div>
+                    <div className="text-2xl font-bold text-category-document">{monthCounts.counts.document}</div>
                     <div className="text-sm text-muted-foreground">Documents</div>
                   </div>
                   <div className="text-center p-4 bg-category-subscription/10 rounded-lg">
-                    <div className="text-2xl font-bold text-category-subscription">2</div>
+                    <div className="text-2xl font-bold text-category-subscription">{monthCounts.counts.subscription}</div>
                     <div className="text-sm text-muted-foreground">Subscriptions</div>
                   </div>
                   <div className="text-center p-4 bg-category-personal/10 rounded-lg">
-                    <div className="text-2xl font-bold text-category-personal">4</div>
+                    <div className="text-2xl font-bold text-category-personal">{monthCounts.counts.personal}</div>
                     <div className="text-sm text-muted-foreground">Personal</div>
                   </div>
                 </div>

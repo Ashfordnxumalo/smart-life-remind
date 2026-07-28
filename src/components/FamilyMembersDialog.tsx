@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Users, Plus, Edit, Trash2, Mail, Phone } from "lucide-react";
+import { FirebaseError } from "firebase/app";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,31 +8,29 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getProfile } from "@/lib/firestore/profile";
+import {
+  addFamilyMember,
+  removeFamilyMember,
+  subscribeToFamilyMembers,
+  updateFamilyMember,
+} from "@/lib/firestore/familyMembers";
+import type { FamilyMember, PlanType } from "@/types/reminder";
 import { useToast } from "@/hooks/use-toast";
-
-interface FamilyMember {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  relationship: string | null;
-  avatar_url: string | null;
-  account_owner_id: string;
-  created_at: string;
-  updated_at: string;
-  is_active: boolean;
-}
 
 interface FamilyMembersDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+const PLAN_LIMITS: Record<PlanType, number> = { family: 5, business: 15 };
+
 export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogProps) => {
+  const { user } = useAuth();
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userPlan, setUserPlan] = useState<'family' | 'business'>('family');
+  const [userPlan, setUserPlan] = useState<PlanType>('family');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [formData, setFormData] = useState({
@@ -43,48 +42,24 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open) {
-      fetchFamilyMembers();
-    }
-  }, [open]);
+    if (!open || !user) return;
 
-  const fetchFamilyMembers = async () => {
     setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    getProfile(user.uid)
+      .then((profile) => setUserPlan(profile?.planType ?? 'family'))
+      .catch(() => setUserPlan('family'));
 
-      // Get user's plan
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('plan_type')
-        .eq('user_id', user.id)
-        .single();
-      
-      setUserPlan(profile?.plan_type || 'family');
-
-      const { data, error } = await supabase
-        .from('family_members')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setFamilyMembers(data || []);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load family members.",
-        variant: "destructive",
-      });
-    } finally {
+    const unsubscribe = subscribeToFamilyMembers(user.uid, (members) => {
+      setFamilyMembers(members);
       setLoading(false);
-    }
-  };
+    });
+
+    return unsubscribe;
+  }, [open, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name) {
       toast({
         title: "Error",
@@ -94,87 +69,30 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
       return;
     }
 
-    // Check user's plan and member limit
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('plan_type')
-      .eq('user_id', user.id)
-      .single();
-    
-    const maxMembers = profile?.plan_type === 'business' ? 15 : 5;
-    const planName = profile?.plan_type === 'business' ? 'Business' : 'Family';
-    
-    if (familyMembers.length >= maxMembers && !editingMember) {
-      toast({
-        title: "Limit Reached",
-        description: `You can only add up to ${maxMembers} members with your ${planName} plan.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to manage family members.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const payload = {
+        name: formData.name,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        relationship: formData.relationship || null,
+      };
 
       if (editingMember) {
-        // Update existing member
-        const { error } = await supabase
-          .from('family_members')
-          .update({
-            name: formData.name,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            relationship: formData.relationship || null,
-          })
-          .eq('id', editingMember.id);
-
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: "Family member updated successfully.",
-        });
+        await updateFamilyMember(editingMember.id, payload);
+        toast({ title: "Success", description: "Family member updated successfully." });
       } else {
-        // Add new member
-        const { error } = await supabase
-          .from('family_members')
-          .insert({
-            name: formData.name,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            relationship: formData.relationship || null,
-            account_owner_id: user.id,
-          });
-
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: "Family member added successfully.",
-        });
+        await addFamilyMember(payload);
+        toast({ title: "Success", description: "Family member added successfully." });
       }
 
-      // Reset form and refresh list
       setFormData({ name: "", email: "", phone: "", relationship: "" });
       setShowAddForm(false);
       setEditingMember(null);
-      fetchFamilyMembers();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save family member.",
-        variant: "destructive",
-      });
+      const description =
+        error instanceof FirebaseError ? error.message : "Failed to save family member.";
+      toast({ title: "Error", description, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -198,19 +116,9 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('family_members')
-        .update({ is_active: false })
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Family member removed successfully.",
-      });
-      fetchFamilyMembers();
-    } catch (error) {
+      await removeFamilyMember(id);
+      toast({ title: "Success", description: "Family member removed successfully." });
+    } catch {
       toast({
         title: "Error",
         description: "Failed to remove family member.",
@@ -230,6 +138,8 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
+  const maxMembers = PLAN_LIMITS[userPlan];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -268,7 +178,7 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
@@ -312,12 +222,12 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
                   {userPlan === 'business' ? 'Team Members' : 'Family Members'}
                 </span>
                 <Badge variant="secondary">
-                  {familyMembers.length}/{userPlan === 'business' ? 15 : 5}
+                  {familyMembers.length}/{maxMembers}
                 </Badge>
               </div>
-              {!showAddForm && familyMembers.length < (userPlan === 'business' ? 15 : 5) && (
-                <Button 
-                  onClick={() => setShowAddForm(true)} 
+              {!showAddForm && familyMembers.length < maxMembers && (
+                <Button
+                  onClick={() => setShowAddForm(true)}
                   size="sm"
                   className="bg-gradient-primary"
                 >
@@ -336,7 +246,7 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No {userPlan === 'business' ? 'team' : 'family'} members added yet.</p>
                 <p className="text-sm">
-                  Add up to {userPlan === 'business' ? 15 : 5} {userPlan === 'business' ? 'team' : 'family'} members to assign reminders.
+                  Add up to {maxMembers} {userPlan === 'business' ? 'team' : 'family'} members to assign reminders.
                 </p>
               </div>
             ) : (

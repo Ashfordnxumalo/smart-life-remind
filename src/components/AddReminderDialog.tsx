@@ -16,8 +16,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useReminders } from "@/hooks/useReminders";
+import { subscribeToFamilyMembers } from "@/lib/firestore/familyMembers";
 import { LocationPicker } from "@/components/LocationPicker";
+import type { FamilyMember, NotificationPreference, Reminder } from "@/types/reminder";
 
 interface AddReminderDialogProps {
   trigger?: React.ReactNode;
@@ -78,19 +81,6 @@ const repeatOptions = [
   { value: "yearly", label: "Yearly" }
 ];
 
-interface FamilyMember {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  relationship: string | null;
-  avatar_url: string | null;
-  account_owner_id: string;
-  created_at: string;
-  updated_at: string;
-  is_active: boolean;
-}
-
 export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: externalOpen, onOpenChange }: AddReminderDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(preSelectedCategory || "");
@@ -103,9 +93,12 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
   const [isAllDay, setIsAllDay] = useState(false);
   const [assignedMember, setAssignedMember] = useState<string>("");
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [notificationPreferences, setNotificationPreferences] = useState<string[]>(["app"]);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>(["app"]);
   const [location, setLocation] = useState<{ address: string; latitude: number; longitude: number } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { create } = useReminders();
 
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
@@ -117,29 +110,13 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
   }, [preSelectedCategory]);
 
   useEffect(() => {
-    if (open) {
-      fetchFamilyMembers();
-    }
-  }, [open]);
-
-  const fetchFamilyMembers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('family_members')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-      setFamilyMembers(data || []);
-    } catch (error) {
-      console.error('Error fetching family members:', error);
-    }
-  };
+    if (!open || !user) return;
+    return subscribeToFamilyMembers(user.uid, setFamilyMembers);
+  }, [open, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !selectedCategory || !date) {
       toast({
         title: "Missing Information",
@@ -149,59 +126,40 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create reminders.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to create reminders.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const reminderData = {
+      await create({
         title,
-        category: selectedCategory,
-        priority: selectedPriority,
+        category: selectedCategory as Reminder["category"],
+        priority: selectedPriority as Reminder["priority"],
         description: notes,
-        due_date: format(date, 'yyyy-MM-dd'),
-        due_time: isAllDay ? null : time,
-        assigned_member_id: assignedMember === "self" ? null : assignedMember || null,
-        notification_preferences: notificationPreferences,
-        reminder_location: location?.address || null,
-        location_lat: location?.latitude || null,
-        location_lng: location?.longitude || null,
-        user_id: user.id,
-      };
+        dueDate: format(date, 'yyyy-MM-dd'),
+        dueTime: isAllDay ? null : time,
+        assignedMemberId: assignedMember === "self" ? null : assignedMember || null,
+        notificationPreferences,
+        reminderLocation: location?.address || null,
+        locationLat: location?.latitude ?? null,
+        locationLng: location?.longitude ?? null,
+        locationRadius: 500,
+      });
 
-      const { data, error } = await supabase
-        .from('reminders')
-        .insert(reminderData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Send notifications if assigned to family member
-      if (assignedMember && data) {
-        const member = familyMembers.find(m => m.id === assignedMember);
-        if (member && (member.email || member.phone)) {
-          await supabase.functions.invoke('send-reminder-notification', {
-            body: {
-              reminder: data,
-              member: member,
-              type: 'assignment'
-            }
-          });
-        }
-      }
+      // In-app notification delivery for assigned family members is handled
+      // server-side by the onReminderAssigned Cloud Function trigger.
 
       toast({
         title: "Reminder Created! 🎉",
         description: `"${title}" has been added to your reminders.`
       });
-      
+
       // Reset form
       setTitle("");
       setNotes("");
@@ -211,9 +169,9 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
       setIsAllDay(false);
       setSelectedPriority("medium");
       setSelectedRepeat("none");
-    setAssignedMember("");
-    setNotificationPreferences(["app"]);
-    setLocation(null);
+      setAssignedMember("");
+      setNotificationPreferences(["app"]);
+      setLocation(null);
       setOpen(false);
     } catch (error) {
       console.error('Error creating reminder:', error);
@@ -222,6 +180,8 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
         description: "Failed to create reminder. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -441,14 +401,16 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Notification Preferences</Label>
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { id: "app", label: "App Notification", icon: Bell },
-                { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
-                { id: "email", label: "Email", icon: Mail },
-                { id: "all", label: "All Methods", icon: Settings }
-              ].map((option) => {
+              {(
+                [
+                  { id: "app", label: "App Notification", icon: Bell },
+                  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
+                  { id: "email", label: "Email", icon: Mail },
+                  { id: "all", label: "All Methods", icon: Settings }
+                ] as { id: NotificationPreference | "all"; label: string; icon: typeof Bell }[]
+              ).map((option) => {
                 const Icon = option.icon;
-                const isChecked = option.id === "all" 
+                const isChecked = option.id === "all"
                   ? notificationPreferences.length === 3 && notificationPreferences.includes("app") && notificationPreferences.includes("whatsapp") && notificationPreferences.includes("email")
                   : notificationPreferences.includes(option.id);
 
@@ -465,11 +427,12 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
                             setNotificationPreferences(["app"]);
                           }
                         } else {
+                          const id = option.id;
                           if (checked) {
-                            setNotificationPreferences(prev => [...prev.filter(p => p !== "all"), option.id]);
+                            setNotificationPreferences(prev => [...prev.filter(p => p !== "all"), id]);
                           } else {
-                            setNotificationPreferences(prev => prev.filter(p => p !== option.id).length > 0 
-                              ? prev.filter(p => p !== option.id) 
+                            setNotificationPreferences(prev => prev.filter(p => p !== id).length > 0
+                              ? prev.filter(p => p !== id)
                               : ["app"]);
                           }
                         }
@@ -517,11 +480,12 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               type="submit"
               className="bg-gradient-primary hover:opacity-90 transition-opacity"
+              disabled={submitting}
             >
-              Create Reminder
+              {submitting ? "Creating..." : "Create Reminder"}
             </Button>
           </div>
         </form>

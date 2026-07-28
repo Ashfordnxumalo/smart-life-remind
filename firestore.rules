@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      // planType is deliberately not client-writable — it gates the family-member
+      // limit enforced by the addFamilyMember Cloud Function.
+      allow update: if isOwner(uid)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['planType']);
+      // Profile docs are created by the client immediately after sign-up (see
+      // AuthPage.tsx) or self-healed by the ensureProfile callable — either way
+      // the write is always uid-scoped and only touches known profile fields.
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(
+          ['fullName', 'email', 'avatarUrl', 'planType', 'fcmTokens', 'createdAt', 'updatedAt']);
+
+      match /reminders/{id} {
+        allow read, update, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasAll(['title', 'category', 'priority', 'dueDate']);
+      }
+
+      // Only Cloud Functions (Admin SDK, which bypasses rules) write notifications.
+      match /notifications/{id} {
+        allow read, update, delete: if isOwner(uid);
+        allow create: if false;
+      }
+
+      match /settings/{id} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /locationState/{id} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Writes only ever go through the addFamilyMember/removeFamilyMember
+      // callables, which enforce the 5/15 plan limit inside a transaction —
+      // see functions/src/familyMembers.ts. Direct client writes are rejected
+      // so that enforcement can't be bypassed.
+      match /familyMembers/{id} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+  }
+}

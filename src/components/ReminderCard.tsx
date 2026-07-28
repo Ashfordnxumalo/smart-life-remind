@@ -8,20 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { LocationNavigation } from "@/components/LocationNavigation";
 import { EditReminderDialog } from "@/components/EditReminderDialog";
 import { useState } from "react";
-
-interface Reminder {
-  id: string;
-  title: string;
-  category: "appointment" | "document" | "subscription" | "personal" | "custom";
-  date: string;
-  time: string;
-  priority: "low" | "medium" | "high";
-  description: string;
-  completed?: boolean;
-  location?: string;
-  location_lat?: number;
-  location_lng?: number;
-}
+import type { Reminder, ReminderUpdate } from "@/types/reminder";
+import { formatDueTime } from "@/lib/reminderDisplay";
 
 const categoryConfig = {
   appointment: {
@@ -68,10 +56,10 @@ const priorityConfig = {
 
 interface ReminderCardProps {
   reminder: Reminder;
-  onComplete?: (id: string) => void;
-  onPostpone?: (id: string) => void;
-  onEdit?: (reminder: Reminder) => void;
-  onDelete?: (id: string) => void;
+  onComplete?: (id: string) => void | Promise<void>;
+  onPostpone?: (id: string) => void | Promise<void>;
+  onEdit?: (id: string, data: ReminderUpdate) => void | Promise<void>;
+  onDelete?: (id: string) => void | Promise<void>;
   variant?: "default" | "compact";
 }
 
@@ -82,39 +70,51 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
   const priorityInfo = priorityConfig[reminder.priority];
   const Icon = categoryInfo.icon;
 
-  const handleComplete = () => {
-    onComplete?.(reminder.id);
-    toast({
-      title: "Reminder completed!",
-      description: `"${reminder.title}" has been marked as complete.`,
-    });
+  const handleComplete = async () => {
+    try {
+      await onComplete?.(reminder.id);
+      toast({
+        title: "Reminder completed!",
+        description: `"${reminder.title}" has been marked as complete.`,
+      });
+    } catch {
+      toast({ title: "Error", description: "Failed to complete reminder.", variant: "destructive" });
+    }
   };
 
-  const handlePostpone = () => {
-    onPostpone?.(reminder.id);
-    toast({
-      title: "Reminder postponed",
-      description: `"${reminder.title}" has been postponed by 1 day.`,
-    });
+  const handlePostpone = async () => {
+    try {
+      await onPostpone?.(reminder.id);
+      toast({
+        title: "Reminder postponed",
+        description: `"${reminder.title}" has been postponed by 1 day.`,
+      });
+    } catch {
+      toast({ title: "Error", description: "Failed to postpone reminder.", variant: "destructive" });
+    }
   };
 
   const handleEdit = () => {
     setEditDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm(`Are you sure you want to delete "${reminder.title}"?`)) {
-      onDelete?.(reminder.id);
-      toast({
-        title: "Reminder deleted",
-        description: `"${reminder.title}" has been deleted.`,
-        variant: "destructive"
-      });
+      try {
+        await onDelete?.(reminder.id);
+        toast({
+          title: "Reminder deleted",
+          description: `"${reminder.title}" has been deleted.`,
+          variant: "destructive"
+        });
+      } catch {
+        toast({ title: "Error", description: "Failed to delete reminder.", variant: "destructive" });
+      }
     }
   };
 
-  const handleEditUpdate = (updatedReminder: Reminder) => {
-    onEdit?.(updatedReminder);
+  const handleEditUpdate = async (id: string, data: ReminderUpdate) => {
+    await onEdit?.(id, data);
     setEditDialogOpen(false);
   };
 
@@ -139,14 +139,14 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
               {reminder.title}
             </h4>
             <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-              <span>{reminder.date}</span>
-              <span>{reminder.time}</span>
+              <span>{reminder.dueDate}</span>
+              <span>{formatDueTime(reminder.dueTime)}</span>
             </div>
-            {reminder.location && (
+            {reminder.reminderLocation && (
               <LocationNavigation
-                location={reminder.location}
-                latitude={reminder.location_lat}
-                longitude={reminder.location_lng}
+                location={reminder.reminderLocation}
+                latitude={reminder.locationLat ?? undefined}
+                longitude={reminder.locationLng ?? undefined}
                 variant="compact"
               />
             )}
@@ -266,19 +266,19 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
           <div className="flex items-center space-x-2">
             <Calendar className="w-3 h-3" />
-            <span>{reminder.date}</span>
+            <span>{reminder.dueDate}</span>
           </div>
           <div className="flex items-center space-x-2">
             <Clock className="w-3 h-3" />
-            <span>{reminder.time}</span>
+            <span>{formatDueTime(reminder.dueTime)}</span>
           </div>
         </div>
-        
-        {reminder.location && (
+
+        {reminder.reminderLocation && (
           <LocationNavigation
-            location={reminder.location}
-            latitude={reminder.location_lat}
-            longitude={reminder.location_lng}
+            location={reminder.reminderLocation}
+            latitude={reminder.locationLat ?? undefined}
+            longitude={reminder.locationLng ?? undefined}
             variant="full"
           />
         )}

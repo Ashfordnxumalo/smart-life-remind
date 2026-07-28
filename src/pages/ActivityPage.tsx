@@ -1,60 +1,30 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Activity, CheckCircle, Clock, AlertTriangle, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
+import { formatDistanceToNow, isBefore, parseISO, startOfDay } from "date-fns";
+import { useReminders } from "@/hooks/useReminders";
+import type { Reminder } from "@/types/reminder";
 
-const recentActivities = [
-  {
-    id: "1",
-    type: "completed",
-    title: "Dentist Checkup completed",
-    description: "6-month cleaning appointment",
-    timestamp: "2 hours ago",
-    category: "appointment"
-  },
-  {
-    id: "2",
-    type: "created",
-    title: "Car Insurance Renewal added",
-    description: "Policy expires end of month",
-    timestamp: "1 day ago",
-    category: "document"
-  },
-  {
-    id: "3",
-    type: "postponed",
-    title: "Gym Membership postponed",
-    description: "Moved to next week",
-    timestamp: "2 days ago",
-    category: "subscription"
-  },
-  {
-    id: "4",
-    type: "completed",
-    title: "Netflix Subscription completed",
-    description: "Monthly renewal - $15.99",
-    timestamp: "3 days ago",
-    category: "subscription"
-  },
-  {
-    id: "5",
-    type: "overdue",
-    title: "Tax Documents overdue",
-    description: "Submit quarterly tax documents",
-    timestamp: "5 days ago",
-    category: "document"
-  }
-];
+type ActivityType = "completed" | "created" | "overdue";
 
-const getActivityIcon = (type: string) => {
+interface ActivityItem {
+  id: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  timestamp: string;
+  category: Reminder["category"];
+}
+
+const getActivityIcon = (type: ActivityType) => {
   switch (type) {
     case "completed":
       return <CheckCircle className="w-4 h-4 text-success" />;
     case "created":
       return <Calendar className="w-4 h-4 text-primary" />;
-    case "postponed":
-      return <Clock className="w-4 h-4 text-warning" />;
     case "overdue":
       return <AlertTriangle className="w-4 h-4 text-destructive" />;
     default:
@@ -62,14 +32,12 @@ const getActivityIcon = (type: string) => {
   }
 };
 
-const getActivityBadge = (type: string) => {
+const getActivityBadge = (type: ActivityType) => {
   switch (type) {
     case "completed":
       return <Badge className="bg-success/10 text-success">Completed</Badge>;
     case "created":
       return <Badge className="bg-primary/10 text-primary">Created</Badge>;
-    case "postponed":
-      return <Badge className="bg-warning/10 text-warning">Postponed</Badge>;
     case "overdue":
       return <Badge className="bg-destructive/10 text-destructive">Overdue</Badge>;
     default:
@@ -78,6 +46,50 @@ const getActivityBadge = (type: string) => {
 };
 
 export default function ActivityPage() {
+  const { reminders, loading, stats } = useReminders();
+
+  const activities = useMemo<ActivityItem[]>(() => {
+    const today = startOfDay(new Date());
+    const items: ActivityItem[] = [];
+
+    for (const r of reminders) {
+      if (r.completed && r.completedAt) {
+        items.push({
+          id: `${r.id}-completed`,
+          type: "completed",
+          title: `${r.title} completed`,
+          description: r.description,
+          timestamp: r.completedAt,
+          category: r.category,
+        });
+      } else if (!r.completed && isBefore(parseISO(r.dueDate), today)) {
+        items.push({
+          id: `${r.id}-overdue`,
+          type: "overdue",
+          title: `${r.title} overdue`,
+          description: r.description,
+          timestamp: r.updatedAt || r.createdAt,
+          category: r.category,
+        });
+      }
+
+      if (r.createdAt) {
+        items.push({
+          id: `${r.id}-created`,
+          type: "created",
+          title: `${r.title} added`,
+          description: r.description,
+          timestamp: r.createdAt,
+          category: r.category,
+        });
+      }
+    }
+
+    return items
+      .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+      .slice(0, 25);
+  }, [reminders]);
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border">
@@ -105,7 +117,7 @@ export default function ActivityPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+
           {/* Activity Stats */}
           <div className="lg:col-span-1 space-y-6">
             <Card className="shadow-soft">
@@ -120,25 +132,25 @@ export default function ActivityPage() {
                     </div>
                     <span className="text-sm font-medium">Completed</span>
                   </div>
-                  <span className="text-xl font-bold text-foreground">12</span>
+                  <span className="text-xl font-bold text-foreground">{stats.completedCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Calendar className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="text-sm font-medium">Created</span>
+                    <span className="text-sm font-medium">Total</span>
                   </div>
-                  <span className="text-xl font-bold text-foreground">8</span>
+                  <span className="text-xl font-bold text-foreground">{reminders.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
                       <Clock className="w-4 h-4 text-warning" />
                     </div>
-                    <span className="text-sm font-medium">Postponed</span>
+                    <span className="text-sm font-medium">This Week</span>
                   </div>
-                  <span className="text-xl font-bold text-foreground">3</span>
+                  <span className="text-xl font-bold text-foreground">{stats.weekCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -147,7 +159,7 @@ export default function ActivityPage() {
                     </div>
                     <span className="text-sm font-medium">Overdue</span>
                   </div>
-                  <span className="text-xl font-bold text-foreground">1</span>
+                  <span className="text-xl font-bold text-foreground">{stats.overdueCount}</span>
                 </div>
               </CardContent>
             </Card>
@@ -161,30 +173,34 @@ export default function ActivityPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivities.map((activity, index) => (
-                    <div key={activity.id} className="flex items-start space-x-4 p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex-shrink-0 mt-1">
-                        {getActivityIcon(activity.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-sm text-foreground">{activity.title}</h4>
-                          {getActivityBadge(activity.type)}
+                  {loading ? (
+                    <p className="text-sm text-muted-foreground">Loading activity...</p>
+                  ) : activities.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No activity yet.</p>
+                  ) : (
+                    activities.map((activity) => (
+                      <div key={activity.id} className="flex items-start space-x-4 p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors">
+                        <div className="flex-shrink-0 mt-1">
+                          {getActivityIcon(activity.type)}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
-                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                          <span>{activity.timestamp}</span>
-                          <span className="capitalize">{activity.category}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-medium text-sm text-foreground">{activity.title}</h4>
+                            {getActivityBadge(activity.type)}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <span>
+                              {activity.timestamp
+                                ? formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })
+                                : ""}
+                            </span>
+                            <span className="capitalize">{activity.category}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-6 text-center">
-                  <Button variant="outline">
-                    Load More Activities
-                  </Button>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>

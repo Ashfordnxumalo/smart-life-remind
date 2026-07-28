@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { updateCurrentLocation } from '@/lib/firestore/location';
 import { useToast } from '@/hooks/use-toast';
+import type { Reminder } from '@/types/reminder';
+import { toISO } from '@/lib/firestore/utils';
 
 interface GeolocationState {
   latitude: number | null;
@@ -23,16 +27,12 @@ export const useGeolocation = () => {
 
   const { toast } = useToast();
 
-  const updateLocation = async (latitude: number, longitude: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const updateLocation = async (latitude: number, longitude: number, accuracy: number | null) => {
+    const user = auth.currentUser;
+    if (!user) return;
 
-      await supabase.from('user_locations').insert({
-        user_id: user.id,
-        latitude,
-        longitude,
-      });
+    try {
+      await updateCurrentLocation(user.uid, { latitude, longitude, accuracy });
     } catch (error) {
       console.error('Error updating location:', error);
     }
@@ -56,7 +56,7 @@ export const useGeolocation = () => {
       });
 
       const { latitude, longitude, accuracy } = position.coords;
-      
+
       setState({
         latitude,
         longitude,
@@ -66,20 +66,21 @@ export const useGeolocation = () => {
         permissionGranted: true,
       });
 
-      await updateLocation(latitude, longitude);
-      
+      await updateLocation(latitude, longitude, accuracy);
+
       toast({
         title: "Location Updated",
         description: "Your location has been recorded for location-based reminders.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = 'Failed to get location';
-      
-      if (error.code === 1) {
+      const geoError = error as GeolocationPositionError;
+
+      if (geoError.code === 1) {
         errorMessage = 'Location access denied. Please enable location permissions.';
-      } else if (error.code === 2) {
+      } else if (geoError.code === 2) {
         errorMessage = 'Location unavailable';
-      } else if (error.code === 3) {
+      } else if (geoError.code === 3) {
         errorMessage = 'Location request timeout';
       }
 
@@ -111,7 +112,7 @@ export const useGeolocation = () => {
           accuracy,
           permissionGranted: true,
         }));
-        updateLocation(latitude, longitude);
+        updateLocation(latitude, longitude, accuracy);
       },
       (error) => {
         console.error('Geolocation watch error:', error);
@@ -124,33 +125,46 @@ export const useGeolocation = () => {
     );
   };
 
-  const checkNearbyReminders = async (userLat: number, userLng: number) => {
+  const checkNearbyReminders = async (userLat: number, userLng: number): Promise<Reminder[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      const q = query(
+        collection(db, 'users', user.uid, 'reminders'),
+        where('completed', '==', false)
+      );
+      const snap = await getDocs(q);
 
-      const { data: reminders, error } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', false)
-        .not('location_lat', 'is', null)
-        .not('location_lng', 'is', null);
+      const nearbyReminders = snap.docs
+        .map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: data.title as string,
+            description: (data.description as string) ?? "",
+            category: data.category as Reminder["category"],
+            priority: data.priority as Reminder["priority"],
+            dueDate: data.dueDate as string,
+            dueTime: (data.dueTime as string) ?? null,
+            completed: Boolean(data.completed),
+            completedAt: toISO(data.completedAt),
+            assignedMemberId: (data.assignedMemberId as string) ?? null,
+            reminderLocation: (data.reminderLocation as string) ?? null,
+            locationLat: (data.locationLat as number) ?? null,
+            locationLng: (data.locationLng as number) ?? null,
+            locationRadius: (data.locationRadius as number) ?? 500,
+            notificationPreferences: (data.notificationPreferences as Reminder["notificationPreferences"]) ?? ["app"],
+            createdAt: toISO(data.createdAt) ?? "",
+            updatedAt: toISO(data.updatedAt) ?? "",
+          } satisfies Reminder;
+        })
+        .filter((reminder) => {
+          if (reminder.locationLat == null || reminder.locationLng == null) return false;
 
-      if (error) throw error;
-
-      const nearbyReminders = reminders?.filter(reminder => {
-        if (!reminder.location_lat || !reminder.location_lng) return false;
-        
-        const distance = calculateDistance(
-          userLat,
-          userLng,
-          reminder.location_lat,
-          reminder.location_lng
-        );
-        
-        return distance <= (reminder.location_radius || 500); // Default 500m radius
-      }) || [];
+          const distance = calculateDistance(userLat, userLng, reminder.locationLat, reminder.locationLng);
+          return distance <= (reminder.locationRadius || 500);
+        });
 
       return nearbyReminders;
     } catch (error) {

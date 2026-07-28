@@ -4,104 +4,35 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ReminderCard } from "./ReminderCard";
 import { QuickStats } from "./QuickStats";
 import { UpcomingReminders } from "./UpcomingReminders";
 import { AddReminderDialog } from "./AddReminderDialog";
 import { ProfileMenu } from "./ProfileMenu";
-
-const mockReminders = [
-  {
-    id: "1",
-    title: "Doctor Appointment",
-    category: "appointment" as const,
-    date: "2024-08-27",
-    time: "10:00 AM",
-    priority: "high" as const,
-    description: "Annual checkup with Dr. Smith",
-    completed: false
-  },
-  {
-    id: "2", 
-    title: "Passport Renewal",
-    category: "document" as const,
-    date: "2024-09-15",
-    time: "All Day",
-    priority: "medium" as const,
-    description: "Passport expires in 3 weeks",
-    completed: false
-  },
-  {
-    id: "3",
-    title: "Netflix Subscription",
-    category: "subscription" as const, 
-    date: "2024-09-01",
-    time: "Auto-renew",
-    priority: "low" as const,
-    description: "Monthly renewal - $15.99",
-    completed: true
-  },
-  {
-    id: "4",
-    title: "Mom's Birthday",
-    category: "personal" as const,
-    date: "2024-09-10",
-    time: "All Day", 
-    priority: "high" as const,
-    description: "Don't forget to call!",
-    completed: false
-  },
-  {
-    id: "5",
-    title: "Car Insurance Renewal",
-    category: "document" as const,
-    date: "2024-08-30",
-    time: "All Day",
-    priority: "medium" as const,
-    description: "Policy expires end of month",
-    completed: false
-  },
-  {
-    id: "6",
-    title: "Dentist Checkup",
-    category: "appointment" as const,
-    date: "2024-09-05",
-    time: "2:00 PM",
-    priority: "low" as const,
-    description: "6-month cleaning appointment",
-    completed: true
-  }
-];
+import { useReminders } from "@/hooks/useReminders";
+import { isToday, parseISO } from "date-fns";
 
 export const Dashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>();
-
-  const handleComplete = (id: string) => {
-    console.log("Completing reminder:", id);
-    // In a real app, this would update the reminder in state/database
-  };
-
-  const handlePostpone = (id: string) => {
-    console.log("Postponing reminder:", id);
-    // In a real app, this would update the reminder date
-  };
-
-  const handleEdit = (updatedReminder: any) => {
-    console.log("Editing reminder:", updatedReminder);
-    // In a real app, this would update the reminder in state/database
-  };
-
-  const handleDelete = (id: string) => {
-    console.log("Deleting reminder:", id);
-    // In a real app, this would remove the reminder from state/database
-  };
+  const [searchQuery, setSearchQuery] = useState("");
+  const { reminders, loading, stats, complete, postpone, update, remove } = useReminders();
 
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setDialogOpen(true);
   };
+
+  const visibleReminders = reminders.filter((r) =>
+    r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const todaysReminders = visibleReminders
+    .filter((r) => !r.completed && isToday(parseISO(r.dueDate)))
+    .slice(0, 4);
+  const displayedReminders = todaysReminders.length > 0 ? todaysReminders : visibleReminders.slice(0, 4);
+  const upcoming = visibleReminders.filter((r) => !r.completed).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -119,20 +50,22 @@ export const Dashboard = () => {
                 </h1>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input 
-                  placeholder="Search reminders..." 
+                <Input
+                  placeholder="Search reminders..."
                   className="pl-10 w-64"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4 mr-2" />
                 Filter
               </Button>
-              <AddReminderDialog 
+              <AddReminderDialog
                 preSelectedCategory={selectedCategory}
                 isOpen={dialogOpen}
                 onOpenChange={(open) => {
@@ -149,20 +82,22 @@ export const Dashboard = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+
           {/* Left Sidebar - Quick Stats & Upcoming */}
           <div className="lg:col-span-1 space-y-6">
-            <QuickStats />
-            <UpcomingReminders reminders={mockReminders.slice(0, 3)} />
+            <QuickStats stats={stats} />
+            {upcoming.length > 0 && <UpcomingReminders reminders={upcoming} />}
           </div>
 
           {/* Main Dashboard Area */}
           <div className="lg:col-span-3 space-y-6">
-            
+
             {/* Welcome Section */}
             <div className="bg-gradient-primary rounded-2xl p-8 text-white shadow-medium">
               <h2 className="text-3xl font-bold mb-2">Good morning! 👋</h2>
-              <p className="text-white/90 mb-6">You have 3 upcoming reminders today. Stay on top of your schedule!</p>
+              <p className="text-white/90 mb-6">
+                You have {stats.todayCount} upcoming reminder{stats.todayCount === 1 ? "" : "s"} today. Stay on top of your schedule!
+              </p>
               <div className="flex items-center space-x-4">
                 <Link to="/calendar">
                   <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
@@ -190,24 +125,32 @@ export const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {mockReminders.slice(0, 4).map((reminder) => (
-                    <ReminderCard 
-                      key={reminder.id} 
-                      reminder={reminder}
-                      onComplete={handleComplete}
-                      onPostpone={handlePostpone}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Loading reminders...</p>
+                ) : displayedReminders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No reminders yet. Click "Add Reminder" to create your first one.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {displayedReminders.map((reminder) => (
+                      <ReminderCard
+                        key={reminder.id}
+                        reminder={reminder}
+                        onComplete={complete}
+                        onPostpone={postpone}
+                        onEdit={update}
+                        onDelete={remove}
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card 
+              <Card
                 className="p-4 hover:shadow-medium transition-all duration-200 cursor-pointer group"
                 onClick={() => handleCategoryClick("appointment")}
               >
@@ -218,8 +161,8 @@ export const Dashboard = () => {
                   <span className="font-medium">Appointment</span>
                 </div>
               </Card>
-              
-              <Card 
+
+              <Card
                 className="p-4 hover:shadow-medium transition-all duration-200 cursor-pointer group"
                 onClick={() => handleCategoryClick("document")}
               >
@@ -230,8 +173,8 @@ export const Dashboard = () => {
                   <span className="font-medium">Document</span>
                 </div>
               </Card>
-              
-              <Card 
+
+              <Card
                 className="p-4 hover:shadow-medium transition-all duration-200 cursor-pointer group"
                 onClick={() => handleCategoryClick("subscription")}
               >
@@ -242,8 +185,8 @@ export const Dashboard = () => {
                   <span className="font-medium">Subscription</span>
                 </div>
               </Card>
-              
-              <Card 
+
+              <Card
                 className="p-4 hover:shadow-medium transition-all duration-200 cursor-pointer group"
                 onClick={() => handleCategoryClick("personal")}
               >

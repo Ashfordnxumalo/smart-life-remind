@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { User, LogOut, Users, Settings } from "lucide-react";
+import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -9,46 +10,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { FamilyMembersDialog } from "./FamilyMembersDialog";
 import { SettingsDialog } from "./SettingsDialog";
 
 export const ProfileMenu = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const { user } = useAuth();
   const [familyDialogOpen, setFamilyDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch {
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
       });
     }
   };
