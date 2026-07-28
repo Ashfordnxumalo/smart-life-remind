@@ -1,16 +1,24 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import AuthPage from "./pages/AuthPage";
-import NotFound from "./pages/NotFound";
-import CalendarPage from "./pages/CalendarPage";
-import ActivityPage from "./pages/ActivityPage";
-import AllRemindersPage from "./pages/AllRemindersPage";
+
+const Index = lazy(() => import("./pages/Index"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+const ActivityPage = lazy(() => import("./pages/ActivityPage"));
+const AllRemindersPage = lazy(() => import("./pages/AllRemindersPage"));
 
 const queryClient = new QueryClient();
+
+const PageFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -18,15 +26,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/activity" element={<ActivityPage />} />
-          <Route path="/reminders" element={<AllRemindersPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/activity" element={<ActivityPage />} />
+            <Route path="/reminders" element={<AllRemindersPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
