@@ -3,6 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LocationNavigation } from "@/components/LocationNavigation";
@@ -65,6 +75,7 @@ interface ReminderCardProps {
 
 export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelete, variant = "default" }: ReminderCardProps) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const categoryInfo = categoryConfig[reminder.category];
   const priorityInfo = priorityConfig[reminder.priority];
@@ -99,17 +110,15 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
   };
 
   const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete "${reminder.title}"?`)) {
-      try {
-        await onDelete?.(reminder.id);
-        toast({
-          title: "Reminder deleted",
-          description: `"${reminder.title}" has been deleted.`,
-          variant: "destructive"
-        });
-      } catch {
-        toast({ title: "Error", description: "Failed to delete reminder.", variant: "destructive" });
-      }
+    try {
+      await onDelete?.(reminder.id);
+      toast({
+        title: "Reminder deleted",
+        description: `"${reminder.title}" has been deleted.`,
+        variant: "destructive"
+      });
+    } catch {
+      toast({ title: "Error", description: "Failed to delete reminder.", variant: "destructive" });
     }
   };
 
@@ -178,7 +187,7 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+              <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-destructive">
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -192,6 +201,23 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
           onOpenChange={setEditDialogOpen}
           onUpdate={handleEditUpdate}
         />
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete reminder?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{reminder.title}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -247,7 +273,7 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-destructive">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
@@ -289,6 +315,23 @@ export const ReminderCard = ({ reminder, onComplete, onPostpone, onEdit, onDelet
           onOpenChange={setEditDialogOpen}
           onUpdate={handleEditUpdate}
         />
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete reminder?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{reminder.title}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
