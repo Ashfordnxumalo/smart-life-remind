@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { User, LogOut, Users, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -44,12 +45,14 @@ export const ProfileMenu = () => {
 
   if (!user) {
     return (
-      <Button 
-        variant="outline" 
-        onClick={() => window.location.href = '/auth'}
-      >
-        <User className="w-4 h-4 mr-2" />
-        Sign In
+      // Routed via <Link> rather than window.location so the router's
+      // basename applies — a raw "/auth" escapes the app when it is served
+      // from a subdirectory.
+      <Button variant="outline" asChild>
+        <Link to="/auth">
+          <User className="w-4 h-4 mr-2" />
+          Sign In
+        </Link>
       </Button>
     );
   }
