@@ -25,7 +25,9 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      {/* Derived from Vite's `base` (VITE_BASE_PATH), so routes stay correct
+          whether the app is served from the domain root or a subdirectory. */}
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />
