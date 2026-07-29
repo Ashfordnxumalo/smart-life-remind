@@ -186,9 +186,11 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
   };
 
   const defaultTrigger = (
-    <Button className="bg-gradient-primary hover:opacity-90 transition-opacity">
-      <Plus className="w-4 h-4 mr-2" />
-      Add Reminder
+    <Button className="bg-gradient-primary transition-opacity hover:opacity-90">
+      <Plus className="h-4 w-4 sm:mr-2" />
+      {/* Icon-only on small screens so the header fits one row. */}
+      <span className="hidden sm:inline">Add Reminder</span>
+      <span className="sr-only sm:hidden">Add Reminder</span>
     </Button>
   );
 

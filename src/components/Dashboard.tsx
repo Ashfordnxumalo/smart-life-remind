@@ -34,35 +34,37 @@ export const Dashboard = () => {
   const displayedReminders = todaysReminders.length > 0 ? todaysReminders : visibleReminders.slice(0, 4);
   const upcoming = visibleReminders.filter((r) => !r.completed).slice(0, 3);
 
+  // Page height is owned by the route (see Index.tsx) so the footer can sit
+  // below the content rather than off-screen.
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <div className="bg-gradient-subtle">
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  SmartRemind
-                </h1>
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
+                <Bell className="h-5 w-5 text-white" />
               </div>
+              <h1 className="truncate bg-gradient-primary bg-clip-text text-lg font-bold text-transparent sm:text-2xl">
+                SmartRemind
+              </h1>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
               <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                 <Input
                   placeholder="Search reminders..."
-                  className="pl-10 w-64"
+                  className="w-64 pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
+              {/* Label collapses to an icon on small screens to keep the
+                  header on one row. */}
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                <Filter className="mr-2 h-4 w-4" />
                 Filter
               </Button>
               <AddReminderDialog
@@ -93,12 +95,12 @@ export const Dashboard = () => {
           <div className="lg:col-span-3 space-y-6">
 
             {/* Welcome Section */}
-            <div className="bg-gradient-primary rounded-2xl p-8 text-white shadow-medium">
-              <h2 className="text-3xl font-bold mb-2">Good morning! 👋</h2>
-              <p className="text-white/90 mb-6">
+            <div className="rounded-2xl bg-gradient-primary p-5 text-white shadow-medium sm:p-8">
+              <h2 className="mb-2 text-2xl font-bold sm:text-3xl">Good morning! 👋</h2>
+              <p className="mb-6 text-white/90">
                 You have {stats.todayCount} upcoming reminder{stats.todayCount === 1 ? "" : "s"} today. Stay on top of your schedule!
               </p>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Link to="/calendar">
                   <Button variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
                     <Calendar className="w-4 h-4 mr-2" />

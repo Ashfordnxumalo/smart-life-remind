@@ -6,54 +6,60 @@
 
 @layer base {
   :root {
-    --background: 220 15% 97%;
-    --foreground: 220 20% 10%;
+    /* Soft, slightly warm neutrals rather than stark white/near-black,
+       which reads as less harsh over long sessions. */
+    --background: 240 25% 99%;
+    --foreground: 224 22% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 224 22% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 224 22% 18%;
 
-    --primary: 220 90% 25%;
+    /* Indigo: same family as the old navy but lighter and less saturated,
+       so it stays legible against white without feeling heavy. */
+    --primary: 243 62% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 10% 90%;
-    --secondary-foreground: 220 20% 10%;
+    --secondary: 240 14% 94%;
+    --secondary-foreground: 224 22% 18%;
 
-    --muted: 220 10% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 240 14% 96%;
+    --muted-foreground: 232 12% 48%;
 
-    --accent: 45 95% 55%;
-    --accent-foreground: 220 20% 10%;
+    /* Teal accent complements indigo without competing with it. */
+    --accent: 172 55% 45%;
+    --accent-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 158 58% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 93% 47%;
-    --warning-foreground: 220 20% 10%;
+    --warning: 38 88% 50%;
+    --warning-foreground: 224 22% 18%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 68% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 10% 88%;
-    --input: 220 10% 92%;
-    --ring: 220 90% 25%;
+    --border: 240 14% 90%;
+    --input: 240 14% 92%;
+    --ring: 243 62% 58%;
 
-    /* Premium luxury palette with sophisticated gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(220 90% 25%), hsl(230 85% 35%));
-    --gradient-secondary: linear-gradient(135deg, hsl(45 95% 55%), hsl(50 90% 60%));
-    --gradient-subtle: linear-gradient(135deg, hsl(220 15% 97%), hsl(225 20% 94%));
-    
-    --category-appointment: 220 90% 25%;
-    --category-document: 200 75% 45%;  
-    --category-subscription: 280 60% 45%;
-    --category-personal: 15 85% 50%;
-    --category-custom: 45 95% 55%;
+    --gradient-primary: linear-gradient(135deg, hsl(243 62% 58%), hsl(262 58% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(172 55% 45%), hsl(186 55% 48%));
+    --gradient-subtle: linear-gradient(135deg, hsl(240 25% 99%), hsl(240 22% 96%));
 
-    --shadow-soft: 0 4px 20px -2px hsl(220 90% 25% / 0.12);
-    --shadow-medium: 0 8px 30px -4px hsl(220 90% 25% / 0.18);
-    --shadow-strong: 0 20px 40px -8px hsl(220 90% 25% / 0.25);
+    /* Category hues are spaced around the wheel but share the primary's
+       moderate saturation and lightness so they read as one family. */
+    --category-appointment: 243 62% 58%;
+    --category-document: 199 72% 48%;
+    --category-subscription: 268 55% 60%;
+    --category-personal: 340 65% 60%;
+    --category-custom: 172 55% 45%;
+
+    --shadow-soft: 0 4px 20px -2px hsl(243 62% 58% / 0.10);
+    --shadow-medium: 0 8px 30px -4px hsl(243 62% 58% / 0.14);
+    --shadow-strong: 0 20px 40px -8px hsl(243 62% 58% / 0.20);
 
     --radius: 0.5rem;
 
@@ -75,33 +81,51 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 232 24% 11%;
+    --foreground: 240 20% 96%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 232 22% 14%;
+    --card-foreground: 240 20% 96%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 232 22% 14%;
+    --popover-foreground: 240 20% 96%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Lifted from the light-mode indigo so it keeps contrast on a dark
+       surface while staying recognisably the same brand colour. */
+    --primary: 243 70% 70%;
+    --primary-foreground: 232 24% 11%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 232 18% 20%;
+    --secondary-foreground: 240 20% 96%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 232 18% 18%;
+    --muted-foreground: 235 12% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 172 50% 55%;
+    --accent-foreground: 232 24% 11%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --success: 158 52% 52%;
+    --success-foreground: 232 24% 11%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --warning: 38 85% 60%;
+    --warning-foreground: 232 24% 11%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 240 20% 96%;
+
+    --border: 232 16% 24%;
+    --input: 232 16% 24%;
+    --ring: 243 70% 70%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(243 70% 62%), hsl(262 62% 64%));
+    --gradient-secondary: linear-gradient(135deg, hsl(172 50% 45%), hsl(186 52% 48%));
+    --gradient-subtle: linear-gradient(135deg, hsl(232 24% 11%), hsl(232 22% 14%));
+
+    --category-appointment: 243 70% 70%;
+    --category-document: 199 70% 60%;
+    --category-subscription: 268 60% 70%;
+    --category-personal: 340 65% 68%;
+    --category-custom: 172 50% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

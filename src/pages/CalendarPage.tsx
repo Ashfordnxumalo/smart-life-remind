@@ -9,6 +9,7 @@ import { format, isThisMonth, isBefore, parseISO, startOfDay } from "date-fns";
 import { ReminderCard } from "@/components/ReminderCard";
 import { AddReminderDialog } from "@/components/AddReminderDialog";
 import { useReminders } from "@/hooks/useReminders";
+import { AppFooter } from "@/components/AppFooter";
 
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -39,32 +40,34 @@ export default function CalendarPage() {
   }, [reminders]);
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <div className="flex min-h-screen flex-col bg-gradient-subtle">
       <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-4">
               <Link to="/">
                 <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Back</span>
                 </Button>
               </Link>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <CalendarDays className="w-5 h-5 text-primary-foreground" />
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary">
+                  <CalendarDays className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <h1 className="text-2xl font-bold text-foreground">
+                <h1 className="truncate text-lg font-bold text-foreground sm:text-2xl">
                   Calendar View
                 </h1>
               </div>
             </div>
-            <AddReminderDialog />
+            <div className="shrink-0">
+              <AddReminderDialog />
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto flex-1 px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Calendar Section */}
@@ -159,6 +162,8 @@ export default function CalendarPage() {
           </div>
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }
