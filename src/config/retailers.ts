@@ -173,6 +173,33 @@ export const KNOWN_RETAILERS: Retailer[] = [
     aliases: ["Nandos"],
     color: "rose",
   },
+  {
+    slug: "cotton-on",
+    name: "Cotton On",
+    aliases: ["CottonOn"],
+    color: "slate",
+    logoFile: "cotton-on.png",
+  },
+  {
+    slug: "h-and-m",
+    name: "H&M",
+    aliases: ["H and M", "HM", "Hennes & Mauritz"],
+    color: "rose",
+    logoFile: "h-and-m.png",
+  },
+  {
+    slug: "leroy-merlin",
+    name: "Leroy Merlin",
+    color: "emerald",
+    logoFile: "leroy-merlin.jpg",
+  },
+  {
+    slug: "seattle-coffee-company",
+    name: "Seattle Coffee Company",
+    aliases: ["Seattle Coffee"],
+    color: "slate",
+    logoFile: "seattle-coffee-company.jpg",
+  },
 
   // Medical schemes and store credit. Not retailers, but the card comes out of
   // the same wallet and carries a membership number the same way.

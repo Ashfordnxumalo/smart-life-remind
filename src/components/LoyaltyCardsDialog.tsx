@@ -86,7 +86,14 @@ export const LoyaltyCardsDialog = ({ open, onOpenChange }: LoyaltyCardsDialogPro
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent
+          className="max-h-[90vh] max-w-2xl overflow-y-auto"
+          // Radix focuses the first focusable child on open, which here is the
+          // search box — that throws up the keyboard on mobile and covers the
+          // wallet the user came to look at. Focus stays on the container so
+          // the trap still works, it just doesn't land in a text field.
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-primary" />
@@ -185,11 +192,19 @@ export const LoyaltyCardsDialog = ({ open, onOpenChange }: LoyaltyCardsDialogPro
         <LoyaltyCardScanView
           card={scanning}
           onClose={() => setScanning(null)}
+          // The scan view is fullscreen and sits above the form and the delete
+          // confirmation, so it has to step aside or they open unseen behind
+          // it and the buttons look dead. Closing it drops the user back on
+          // the wallet, with the form or confirmation on top.
           onEdit={(card) => {
+            setScanning(null);
             setEditing(card);
             setFormOpen(true);
           }}
-          onDelete={(card) => setPendingDelete(card)}
+          onDelete={(card) => {
+            setScanning(null);
+            setPendingDelete(card);
+          }}
         />
       )}
 

@@ -63,16 +63,13 @@ export const Dashboard = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              {/* Label collapses to an icon on small screens to keep the
-                  header on one row. */}
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => setCardsOpen(true)}
                 aria-label="Loyalty cards"
               >
-                <CreditCard className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Cards</span>
+                <CreditCard className="mr-2 h-5 w-5" />
+                Cards
               </Button>
               <AddReminderDialog
                 preSelectedCategory={selectedCategory}
