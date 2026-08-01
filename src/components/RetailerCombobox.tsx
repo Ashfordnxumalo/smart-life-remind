@@ -173,7 +173,7 @@ export const RetailerCombobox = ({
                   slug={retailer.slug}
                   name={retailer.name}
                   fallbackColor={accent.from}
-                  className="h-8 w-8"
+                  height={32}
                 />
                 <span className="truncate font-medium">{retailer.name}</span>
               </li>

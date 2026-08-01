@@ -155,7 +155,7 @@ export const LoyaltyCardsDialog = ({ open, onOpenChange }: LoyaltyCardsDialogPro
                               slug={card.retailerSlug}
                               name={card.retailer}
                               fallbackColor={accent.from}
-                              className="h-9 w-9"
+                              height={36}
                             />
                             <span className="truncate text-base font-semibold">
                               {card.retailer}

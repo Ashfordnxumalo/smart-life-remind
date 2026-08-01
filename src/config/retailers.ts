@@ -29,13 +29,15 @@ export interface Retailer {
 }
 
 /**
- * The top 20 South African retailers with loyalty programmes.
+ * Cards South Africans commonly carry — retail loyalty programmes, plus the
+ * medical schemes and store-credit providers whose cards get presented the
+ * same way.
  *
- * This list is meant to be edited — append entries as new retailers come up.
- * It is not exhaustive by design: anything typed that isn't listed here is
- * still stored exactly as the user wrote it, just without a logo or slug.
+ * This list is meant to be edited — append entries as new ones come up. It is
+ * not exhaustive by design: anything typed that isn't listed here is still
+ * stored exactly as the user wrote it, just without a logo or slug.
  *
- * Deliberately no default barcode format per retailer: card symbologies vary
+ * Deliberately no default barcode format per entry: card symbologies vary
  * between programmes and even between card generations, and a wrong default
  * produces a card that fails at the till. The format stays an explicit choice.
  */
@@ -45,48 +47,56 @@ export const KNOWN_RETAILERS: Retailer[] = [
     name: "Woolworths",
     aliases: ["Woolies", "WRewards", "W Rewards"],
     color: "emerald",
+    logoFile: "woolworths.png",
   },
   {
     slug: "pick-n-pay",
     name: "Pick n Pay",
     aliases: ["PnP", "Pick and Pay", "Smart Shopper"],
     color: "sky",
+    logoFile: "pick-n-pay.png",
   },
   {
     slug: "checkers",
     name: "Checkers",
     aliases: ["Xtra Savings", "Sixty60"],
     color: "rose",
+    logoFile: "checkers.png",
   },
   {
     slug: "shoprite",
     name: "Shoprite",
     aliases: ["Xtra Savings"],
     color: "rose",
+    logoFile: "shoprite.png",
   },
   {
     slug: "clicks",
     name: "Clicks",
     aliases: ["ClubCard", "Club Card"],
     color: "sky",
+    logoFile: "clicks.png",
   },
   {
     slug: "dis-chem",
     name: "Dis-Chem",
     aliases: ["Dischem", "Dis Chem", "Benefit"],
     color: "emerald",
+    logoFile: "dis-chem.png",
   },
   {
     slug: "spar",
     name: "SPAR",
     aliases: ["Spar Rewards"],
     color: "emerald",
+    logoFile: "spar.png",
   },
   {
     slug: "makro",
     name: "Makro",
     aliases: ["mCard", "M Card"],
     color: "rose",
+    logoFile: "makro.png",
   },
   {
     slug: "game",
@@ -98,6 +108,7 @@ export const KNOWN_RETAILERS: Retailer[] = [
     name: "Edgars",
     aliases: ["Edgars Club"],
     color: "rose",
+    logoFile: "edgars.png",
   },
   {
     slug: "truworths",
@@ -109,12 +120,14 @@ export const KNOWN_RETAILERS: Retailer[] = [
     name: "Mr Price",
     aliases: ["MRP", "MRP Money", "Mr Price Money"],
     color: "rose",
+    logoFile: "mr-price.png",
   },
   {
     slug: "foschini",
     name: "Foschini",
     aliases: ["TFG", "TFG Rewards"],
     color: "violet",
+    logoFile: "foschini.png",
   },
   {
     slug: "cape-union-mart",
@@ -133,12 +146,14 @@ export const KNOWN_RETAILERS: Retailer[] = [
     name: "Exclusive Books",
     aliases: ["Fanatics"],
     color: "slate",
+    logoFile: "exclusive-books.png",
   },
   {
     slug: "builders",
     name: "Builders",
     aliases: ["Builders Warehouse"],
     color: "amber",
+    logoFile: "builders.png",
   },
   {
     slug: "engen",
@@ -150,12 +165,44 @@ export const KNOWN_RETAILERS: Retailer[] = [
     name: "Sasol",
     aliases: ["Sasol Rewards"],
     color: "sky",
+    logoFile: "sasol.png",
   },
   {
     slug: "nandos",
     name: "Nando's",
     aliases: ["Nandos"],
     color: "rose",
+  },
+
+  // Medical schemes and store credit. Not retailers, but the card comes out of
+  // the same wallet and carries a membership number the same way.
+  {
+    slug: "discovery-health",
+    name: "Discovery Health",
+    aliases: ["Discovery", "Vitality", "Discovery Medical Aid"],
+    color: "amber",
+    logoFile: "discovery-health.png",
+  },
+  {
+    slug: "bonitas",
+    name: "Bonitas",
+    aliases: ["Bonitas Medical Fund"],
+    color: "emerald",
+    logoFile: "bonitas.png",
+  },
+  {
+    slug: "gems",
+    name: "GEMS",
+    aliases: ["Government Employees Medical Scheme"],
+    color: "sky",
+    logoFile: "gems.jpg",
+  },
+  {
+    slug: "rcs",
+    name: "RCS",
+    aliases: ["RCS Card", "RCS Store Card"],
+    color: "violet",
+    logoFile: "rcs.png",
   },
 ];
 
