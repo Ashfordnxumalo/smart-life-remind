@@ -1,0 +1,146 @@
+import { useEffect, useState } from "react";
+import { Check, Copy, Pencil, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Barcode } from "@/components/Barcode";
+import { useToast } from "@/hooks/use-toast";
+import { getCardColor, type LoyaltyCard } from "@/types/loyaltyCard";
+
+interface LoyaltyCardScanViewProps {
+  card: LoyaltyCard;
+  onClose: () => void;
+  onEdit: (card: LoyaltyCard) => void;
+  onDelete: (card: LoyaltyCard) => void;
+}
+
+/** Groups digits so a cashier can read the number aloud without losing place. */
+const formatCardNumber = (value: string) =>
+  /^\d+$/.test(value) ? value.replace(/(.{4})/g, "$1 ").trim() : value;
+
+export const LoyaltyCardScanView = ({
+  card,
+  onClose,
+  onEdit,
+  onDelete,
+}: LoyaltyCardScanViewProps) => {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  const accent = getCardColor(card.color);
+
+  // Scanners struggle with a dimmed screen, and phones dim aggressively on
+  // idle. Holding a wake lock keeps the display lit while the barcode is up.
+  useEffect(() => {
+    let released = false;
+    let sentinel: WakeLockSentinel | null = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ("wakeLock" in navigator) {
+          sentinel = await navigator.wakeLock.request("screen");
+        }
+      } catch {
+        // Unsupported or denied — the barcode still renders, so carry on.
+      }
+    };
+
+    void requestWakeLock();
+
+    return () => {
+      released = true;
+      void sentinel?.release().catch(() => undefined);
+      void released;
+    };
+  }, []);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(card.cardNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({
+        title: "Couldn't copy",
+        description: "Copy the number manually instead.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col bg-white">
+      <div
+        className="flex items-center justify-between px-4 py-3 text-white"
+        style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }}
+      >
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-semibold">{card.retailer}</h2>
+          <p className="text-xs text-white/80">Present this at the till</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="shrink-0 text-white hover:bg-white/20 hover:text-white"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* White background and generous quiet zone give the scanner the
+          contrast and margin it needs. */}
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto bg-white px-4 py-8">
+        <div className="w-full max-w-md overflow-x-auto">
+          <Barcode
+            value={card.cardNumber}
+            format={card.barcodeFormat}
+            height={150}
+            width={2.5}
+            className="flex min-w-fit justify-center"
+          />
+        </div>
+
+        <div className="text-center">
+          <p className="font-mono text-2xl font-bold tracking-wider text-black sm:text-3xl">
+            {formatCardNumber(card.cardNumber)}
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-wide text-neutral-500">
+            {card.barcodeFormat}
+          </p>
+        </div>
+
+        <Button variant="outline" size="sm" onClick={handleCopy} className="text-black">
+          {copied ? (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              Copied
+            </>
+          ) : (
+            <>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy number
+            </>
+          )}
+        </Button>
+
+        {card.notes && (
+          <p className="max-w-md text-center text-sm text-neutral-600">{card.notes}</p>
+        )}
+      </div>
+
+      <div className="flex gap-2 border-t border-neutral-200 bg-white px-4 py-3">
+        <Button variant="outline" className="flex-1 text-black" onClick={() => onEdit(card)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+          onClick={() => onDelete(card)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </Button>
+      </div>
+    </div>
+  );
+};

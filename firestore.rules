@@ -36,6 +36,14 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // Loyalty card numbers are sensitive — strictly owner-only, and
+      // never readable by another signed-in user.
+      match /loyaltyCards/{id} {
+        allow read, update, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasAll(['retailer', 'cardNumber', 'barcodeFormat']);
+      }
+
       match /locationState/{id} {
         allow read, write: if isOwner(uid);
       }

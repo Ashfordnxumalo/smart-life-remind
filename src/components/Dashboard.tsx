@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Clock, Plus, Bell, Search, Filter } from "lucide-react";
+import { Calendar, Clock, Plus, Bell, Search, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { QuickStats } from "./QuickStats";
 import { UpcomingReminders } from "./UpcomingReminders";
 import { AddReminderDialog } from "./AddReminderDialog";
 import { ProfileMenu } from "./ProfileMenu";
+import { LoyaltyCardsDialog } from "./LoyaltyCardsDialog";
 import { useReminders } from "@/hooks/useReminders";
 import { isToday, parseISO } from "date-fns";
 
@@ -16,6 +17,7 @@ export const Dashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>();
   const [searchQuery, setSearchQuery] = useState("");
+  const [cardsOpen, setCardsOpen] = useState(false);
   const { reminders, loading, stats, complete, postpone, update, remove } = useReminders();
 
   const handleCategoryClick = (categoryId: string) => {
@@ -63,9 +65,14 @@ export const Dashboard = () => {
               </div>
               {/* Label collapses to an icon on small screens to keep the
                   header on one row. */}
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCardsOpen(true)}
+                aria-label="Loyalty cards"
+              >
+                <CreditCard className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Cards</span>
               </Button>
               <AddReminderDialog
                 preSelectedCategory={selectedCategory}
@@ -203,6 +210,8 @@ export const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      <LoyaltyCardsDialog open={cardsOpen} onOpenChange={setCardsOpen} />
     </div>
   );
 };
