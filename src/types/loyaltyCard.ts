@@ -34,7 +34,14 @@ export type CardColor = (typeof CARD_COLORS)[number]["value"];
 
 export interface LoyaltyCard {
   id: string;
+  /** Always the name as the user left it, listed retailer or not. */
   retailer: string;
+  /**
+   * Slug of the matching entry in KNOWN_RETAILERS, or null for a name typed by
+   * hand. Stored rather than re-derived from the name so renaming a retailer
+   * in the config doesn't silently drop the logo from existing cards.
+   */
+  retailerSlug: string | null;
   cardNumber: string;
   barcodeFormat: BarcodeFormat;
   color: CardColor;

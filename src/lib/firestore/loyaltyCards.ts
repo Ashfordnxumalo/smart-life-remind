@@ -23,6 +23,7 @@ const cardDoc = (uid: string, id: string) => doc(db, "users", uid, "loyaltyCards
 const fromSnapshot = (id: string, data: Record<string, unknown>): LoyaltyCard => ({
   id,
   retailer: (data.retailer as string) ?? "",
+  retailerSlug: (data.retailerSlug as string) ?? null,
   cardNumber: (data.cardNumber as string) ?? "",
   barcodeFormat: (data.barcodeFormat as LoyaltyCard["barcodeFormat"]) ?? "CODE128",
   color: (data.color as LoyaltyCard["color"]) ?? "indigo",

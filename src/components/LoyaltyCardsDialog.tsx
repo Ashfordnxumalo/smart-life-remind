@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLoyaltyCards } from "@/hooks/useLoyaltyCards";
 import { LoyaltyCardFormDialog } from "@/components/LoyaltyCardFormDialog";
 import { LoyaltyCardScanView } from "@/components/LoyaltyCardScanView";
+import { RetailerLogo } from "@/components/RetailerLogo";
 import { getCardColor, type LoyaltyCard, type NewLoyaltyCard } from "@/types/loyaltyCard";
 
 interface LoyaltyCardsDialogProps {
@@ -149,9 +150,17 @@ export const LoyaltyCardsDialog = ({ open, onOpenChange }: LoyaltyCardsDialogPro
                     >
                       <div className="flex h-full min-h-[104px] flex-col justify-between">
                         <div className="flex items-start justify-between gap-2">
-                          <span className="truncate text-base font-semibold">
-                            {card.retailer}
-                          </span>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <RetailerLogo
+                              slug={card.retailerSlug}
+                              name={card.retailer}
+                              fallbackColor={accent.from}
+                              className="h-9 w-9"
+                            />
+                            <span className="truncate text-base font-semibold">
+                              {card.retailer}
+                            </span>
+                          </div>
                           <ScanLine className="h-5 w-5 shrink-0 opacity-70 transition-opacity group-hover:opacity-100" />
                         </div>
                         <div>

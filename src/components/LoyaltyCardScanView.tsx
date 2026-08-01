@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Barcode } from "@/components/Barcode";
+import { RetailerLogo } from "@/components/RetailerLogo";
 import { useToast } from "@/hooks/use-toast";
 import { getCardColor, type LoyaltyCard } from "@/types/loyaltyCard";
 
@@ -71,9 +72,16 @@ export const LoyaltyCardScanView = ({
         className="flex items-center justify-between px-4 py-3 text-white"
         style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }}
       >
-        <div className="min-w-0">
-          <h2 className="truncate text-lg font-semibold">{card.retailer}</h2>
-          <p className="text-xs text-white/80">Present this at the till</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <RetailerLogo
+            slug={card.retailerSlug}
+            name={card.retailer}
+            fallbackColor={accent.from}
+          />
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold">{card.retailer}</h2>
+            <p className="text-xs text-white/80">Present this at the till</p>
+          </div>
         </div>
         <Button
           variant="ghost"

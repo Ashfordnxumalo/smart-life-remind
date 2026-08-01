@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Barcode } from "@/components/Barcode";
+import { RetailerCombobox } from "@/components/RetailerCombobox";
+import { matchRetailerByName } from "@/config/retailers";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -39,11 +41,13 @@ export const LoyaltyCardFormDialog = ({
   onSubmit,
 }: LoyaltyCardFormDialogProps) => {
   const [retailer, setRetailer] = useState("");
+  const [retailerSlug, setRetailerSlug] = useState<string | null>(null);
   const [cardNumber, setCardNumber] = useState("");
   const [barcodeFormat, setBarcodeFormat] = useState<BarcodeFormat>("CODE128");
   const [color, setColor] = useState<CardColor>("indigo");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [retailerListOpen, setRetailerListOpen] = useState(false);
   // Result of the real encode attempt, tagged with the input it applies to so a
   // stale verdict can never be applied to a number the user has since changed.
   const [encodeCheck, setEncodeCheck] = useState<{ key: string; valid: boolean } | null>(
@@ -54,6 +58,7 @@ export const LoyaltyCardFormDialog = ({
   useEffect(() => {
     if (!open) return;
     setRetailer(card?.retailer ?? "");
+    setRetailerSlug(card?.retailerSlug ?? null);
     setCardNumber(card?.cardNumber ?? "");
     setBarcodeFormat(card?.barcodeFormat ?? "CODE128");
     setColor(card?.color ?? "indigo");
@@ -110,8 +115,12 @@ export const LoyaltyCardFormDialog = ({
 
     setSubmitting(true);
     try {
+      const trimmedRetailer = retailer.trim();
       await onSubmit({
-        retailer: retailer.trim(),
+        retailer: trimmedRetailer,
+        // Re-resolve on submit: the name may have been typed out in full
+        // rather than picked, and trimming can turn it into an exact match.
+        retailerSlug: retailerSlug ?? matchRetailerByName(trimmedRetailer)?.slug ?? null,
         cardNumber: cardNumber.trim(),
         barcodeFormat,
         color,
@@ -134,7 +143,15 @@ export const LoyaltyCardFormDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent
+        className="max-h-[90vh] max-w-lg overflow-y-auto"
+        // With the retailer suggestions showing, Escape belongs to the list.
+        // Radix would otherwise close the whole form on that same keypress and
+        // lose everything typed so far.
+        onEscapeKeyDown={(event) => {
+          if (retailerListOpen) event.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{card ? "Edit card" : "Add loyalty card"}</DialogTitle>
         </DialogHeader>
@@ -144,12 +161,18 @@ export const LoyaltyCardFormDialog = ({
             <Label htmlFor="retailer">
               Retailer <span className="text-destructive">*</span>
             </Label>
-            <Input
+            <RetailerCombobox
               id="retailer"
               placeholder="e.g. Woolworths, Clicks, Pick n Pay"
               value={retailer}
-              onChange={(e) => setRetailer(e.target.value)}
-              autoComplete="off"
+              onListOpenChange={setRetailerListOpen}
+              onChange={(name, matched) => {
+                setRetailer(name);
+                setRetailerSlug(matched?.slug ?? null);
+                // Picking a known retailer adopts its brand accent, but only
+                // as a starting point — the colour swatches still override it.
+                if (matched) setColor(matched.color);
+              }}
             />
           </div>
 
