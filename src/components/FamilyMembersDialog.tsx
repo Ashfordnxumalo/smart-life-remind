@@ -191,12 +191,13 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">WhatsApp Number</Label>
+                      <Label htmlFor="phone">Phone Number</Label>
                       <Input
                         id="phone"
+                        type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        placeholder="+1234567890"
+                        placeholder="+27 82 000 0000"
                       />
                     </div>
                   </div>

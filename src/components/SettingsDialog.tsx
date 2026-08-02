@@ -82,7 +82,12 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                   <Label>Theme</Label>
                   <Select
                     value={settings.theme}
-                    onValueChange={(value) => setSettings(prev => ({ ...prev, theme: value }))}
+                    onValueChange={(value) =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        theme: value as UserSettings["theme"],
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />

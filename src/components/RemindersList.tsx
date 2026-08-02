@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReminderCard } from "./ReminderCard";
 import { cn } from "@/lib/utils";
-import type { Reminder } from "@/types/reminder";
+import type { Reminder, ReminderUpdate } from "@/types/reminder";
 
 interface RemindersListProps {
   reminders: Reminder[];
@@ -16,7 +16,9 @@ interface RemindersListProps {
   categoryFilter?: string;
   onComplete?: (id: string) => void | Promise<void>;
   onPostpone?: (id: string) => void | Promise<void>;
-  onEdit?: (reminder: Reminder) => void;
+  // Mirrors ReminderCard's contract: the card owns the edit dialog and hands
+  // back the id plus a patch, rather than the whole reminder.
+  onEdit?: (id: string, data: ReminderUpdate) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
 }
 
@@ -176,7 +178,9 @@ interface RemindersGridProps {
   viewMode: "grid" | "list";
   onComplete?: (id: string) => void | Promise<void>;
   onPostpone?: (id: string) => void | Promise<void>;
-  onEdit?: (reminder: Reminder) => void;
+  // Mirrors ReminderCard's contract: the card owns the edit dialog and hands
+  // back the id plus a patch, rather than the whole reminder.
+  onEdit?: (id: string, data: ReminderUpdate) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
 }
 

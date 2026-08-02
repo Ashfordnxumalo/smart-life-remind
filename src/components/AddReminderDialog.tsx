@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, FileText, Calendar, CreditCard, Heart, Settings, Plus, Users, Bell, MessageCircle, Mail, MapPin } from "lucide-react";
+import { CalendarIcon, Clock, FileText, Calendar, CreditCard, Heart, Settings, Plus, Users, Bell, Mail, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -354,7 +354,8 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
               {assignedMember && (
                 <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
                   <Users className="w-4 h-4 inline mr-1" />
-                  This family member will receive notifications via email and WhatsApp when available.
+                  If this member has an email address on file, they will be emailed
+                  about this reminder.
                 </div>
               )}
             </div>
@@ -403,18 +404,26 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Notification Preferences</Label>
             <div className="grid grid-cols-2 gap-3">
+              {/* Two channels only. An "all" shortcut made sense across three
+                  options; across two it is just a third box to reason about. */}
               {(
                 [
-                  { id: "app", label: "App Notification", icon: Bell },
-                  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
-                  { id: "email", label: "Email", icon: Mail },
-                  { id: "all", label: "All Methods", icon: Settings }
-                ] as { id: NotificationPreference | "all"; label: string; icon: typeof Bell }[]
+                  {
+                    id: "app",
+                    label: "App Notification",
+                    hint: "Shows in your activity feed",
+                    icon: Bell,
+                  },
+                  {
+                    id: "email",
+                    label: "Email",
+                    hint: "Sent to you and anyone assigned",
+                    icon: Mail,
+                  },
+                ] as { id: NotificationPreference; label: string; hint: string; icon: typeof Bell }[]
               ).map((option) => {
                 const Icon = option.icon;
-                const isChecked = option.id === "all"
-                  ? notificationPreferences.length === 3 && notificationPreferences.includes("app") && notificationPreferences.includes("whatsapp") && notificationPreferences.includes("email")
-                  : notificationPreferences.includes(option.id);
+                const isChecked = notificationPreferences.includes(option.id);
 
                 return (
                   <div key={option.id} className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors">
@@ -422,27 +431,26 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
                       id={option.id}
                       checked={isChecked}
                       onCheckedChange={(checked) => {
-                        if (option.id === "all") {
-                          if (checked) {
-                            setNotificationPreferences(["app", "whatsapp", "email"]);
-                          } else {
-                            setNotificationPreferences(["app"]);
-                          }
+                        const id = option.id;
+                        if (checked) {
+                          setNotificationPreferences((prev) =>
+                            prev.includes(id) ? prev : [...prev, id]
+                          );
                         } else {
-                          const id = option.id;
-                          if (checked) {
-                            setNotificationPreferences(prev => [...prev.filter(p => p !== "all"), id]);
-                          } else {
-                            setNotificationPreferences(prev => prev.filter(p => p !== id).length > 0
-                              ? prev.filter(p => p !== id)
-                              : ["app"]);
-                          }
+                          // Never leave a reminder with no way to reach anyone.
+                          setNotificationPreferences((prev) => {
+                            const next = prev.filter((p) => p !== id);
+                            return next.length > 0 ? next : ["app"];
+                          });
                         }
                       }}
                     />
                     <Icon className="w-4 h-4 text-muted-foreground" />
                     <Label htmlFor={option.id} className="text-sm cursor-pointer flex-1">
                       {option.label}
+                      <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                        {option.hint}
+                      </span>
                     </Label>
                   </div>
                 );

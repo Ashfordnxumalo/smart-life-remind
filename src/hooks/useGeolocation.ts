@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { updateCurrentLocation } from '@/lib/firestore/location';
 import { useToast } from '@/hooks/use-toast';
+import { sanitizeNotificationPreferences } from '@/types/reminder';
 import type { Reminder } from '@/types/reminder';
 import { toISO } from '@/lib/firestore/utils';
 
@@ -154,7 +155,7 @@ export const useGeolocation = () => {
             locationLat: (data.locationLat as number) ?? null,
             locationLng: (data.locationLng as number) ?? null,
             locationRadius: (data.locationRadius as number) ?? 500,
-            notificationPreferences: (data.notificationPreferences as Reminder["notificationPreferences"]) ?? ["app"],
+            notificationPreferences: sanitizeNotificationPreferences(data.notificationPreferences),
             createdAt: toISO(data.createdAt) ?? "",
             updatedAt: toISO(data.updatedAt) ?? "",
           } satisfies Reminder;

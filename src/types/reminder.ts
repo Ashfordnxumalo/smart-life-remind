@@ -1,6 +1,23 @@
 export type ReminderCategory = "appointment" | "document" | "subscription" | "personal" | "custom";
 export type ReminderPriority = "low" | "medium" | "high";
-export type NotificationPreference = "app" | "whatsapp" | "email";
+export type NotificationPreference = "app" | "email";
+
+export const NOTIFICATION_PREFERENCES: NotificationPreference[] = ["app", "email"];
+
+/**
+ * Reminders saved while WhatsApp was still an option carry "whatsapp" in this
+ * array, and nothing rewrites old documents — so unsupported values are
+ * dropped on read. Falls back to in-app so a reminder always has one channel.
+ */
+export const sanitizeNotificationPreferences = (
+  value: unknown
+): NotificationPreference[] => {
+  const list = Array.isArray(value) ? value : [];
+  const valid = list.filter((entry): entry is NotificationPreference =>
+    NOTIFICATION_PREFERENCES.includes(entry as NotificationPreference)
+  );
+  return valid.length > 0 ? valid : ["app"];
+};
 
 export interface Reminder {
   id: string;

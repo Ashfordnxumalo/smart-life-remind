@@ -10,6 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { sanitizeNotificationPreferences } from "@/types/reminder";
 import type { NewReminder, Reminder, ReminderUpdate } from "@/types/reminder";
 import { toISO } from "./utils";
 
@@ -31,7 +32,7 @@ const fromSnapshot = (id: string, data: Record<string, unknown>): Reminder => ({
   locationLat: (data.locationLat as number) ?? null,
   locationLng: (data.locationLng as number) ?? null,
   locationRadius: (data.locationRadius as number) ?? 500,
-  notificationPreferences: (data.notificationPreferences as Reminder["notificationPreferences"]) ?? ["app"],
+  notificationPreferences: sanitizeNotificationPreferences(data.notificationPreferences),
   createdAt: toISO(data.createdAt) ?? "",
   updatedAt: toISO(data.updatedAt) ?? "",
 });
