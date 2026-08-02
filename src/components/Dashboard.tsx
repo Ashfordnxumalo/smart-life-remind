@@ -10,31 +10,79 @@ import { UpcomingReminders } from "./UpcomingReminders";
 import { AddReminderDialog } from "./AddReminderDialog";
 import { ProfileMenu } from "./ProfileMenu";
 import { LoyaltyCardsDialog } from "./LoyaltyCardsDialog";
+import { AssignedRemindersPanel } from "./AssignedRemindersPanel";
 import { useReminders } from "@/hooks/useReminders";
-import { isToday, parseISO } from "date-fns";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import type { ReminderFilter } from "./QuickStats";
+import type { Reminder } from "@/types/reminder";
+import { isBefore, isThisWeek, isToday, parseISO, startOfDay } from "date-fns";
 
 export const Dashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>();
   const [searchQuery, setSearchQuery] = useState("");
   const [cardsOpen, setCardsOpen] = useState(false);
-  const { reminders, loading, stats, complete, postpone, update, remove } = useReminders();
+  const [filter, setFilter] = useState<ReminderFilter | null>(null);
+  const {
+    reminders,
+    assignedToMe,
+    assignedByMe,
+    loading,
+    stats,
+    complete,
+    completeAssigned,
+    postpone,
+    update,
+    remove,
+  } = useReminders();
+  const { familyMembers } = useFamilyMembers();
 
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setDialogOpen(true);
   };
 
-  const visibleReminders = reminders.filter((r) =>
+  const matchesSearch = (r: Reminder) =>
     r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    r.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+  const visibleReminders = reminders.filter(matchesSearch);
 
   const todaysReminders = visibleReminders
     .filter((r) => !r.completed && isToday(parseISO(r.dueDate)))
     .slice(0, 4);
   const displayedReminders = todaysReminders.length > 0 ? todaysReminders : visibleReminders.slice(0, 4);
   const upcoming = visibleReminders.filter((r) => !r.completed).slice(0, 3);
+
+  // Reminders matching the selected Overview tile. Assigned is the odd one
+  // out: it spans two accounts, so it's handled separately below.
+  const filteredReminders = (() => {
+    const today = startOfDay(new Date());
+    switch (filter) {
+      case "today":
+        return visibleReminders.filter((r) => !r.completed && isToday(parseISO(r.dueDate)));
+      case "week":
+        return visibleReminders.filter(
+          (r) => !r.completed && isThisWeek(parseISO(r.dueDate), { weekStartsOn: 1 })
+        );
+      case "overdue":
+        return visibleReminders.filter(
+          (r) => !r.completed && isBefore(parseISO(r.dueDate), today)
+        );
+      case "completed":
+        return visibleReminders.filter((r) => r.completed);
+      default:
+        return [];
+    }
+  })();
+
+  const filterTitles: Record<ReminderFilter, string> = {
+    today: "Due today",
+    week: "Due this week",
+    overdue: "Overdue",
+    completed: "Completed",
+    assigned: "Assigned",
+  };
 
   // Page height is owned by the route (see Index.tsx) so the footer can sit
   // below the content rather than off-screen.
@@ -91,7 +139,7 @@ export const Dashboard = () => {
 
           {/* Left Sidebar - Quick Stats & Upcoming */}
           <div className="lg:col-span-1 space-y-6">
-            <QuickStats stats={stats} />
+            <QuickStats stats={stats} active={filter} onSelect={setFilter} />
             {upcoming.length > 0 && <UpcomingReminders reminders={upcoming} />}
           </div>
 
@@ -120,7 +168,52 @@ export const Dashboard = () => {
               </div>
             </div>
 
-            {/* Categories Overview */}
+            {/* A selected Overview tile replaces the default list, so the
+                dashboard answers the question that was just clicked. */}
+            {filter === "assigned" ? (
+              <AssignedRemindersPanel
+                assignedToMe={assignedToMe}
+                assignedByMe={assignedByMe}
+                familyMembers={familyMembers}
+                onCompleteAssigned={completeAssigned}
+              />
+            ) : filter ? (
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center">
+                      <div className="mr-3 flex h-6 w-6 items-center justify-center rounded-md bg-gradient-primary">
+                        <Bell className="h-4 w-4 text-white" />
+                      </div>
+                      {filterTitles[filter]}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setFilter(null)}>
+                      Clear
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {filteredReminders.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      Nothing {filterTitles[filter].toLowerCase()}.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {filteredReminders.map((reminder) => (
+                        <ReminderCard
+                          key={reminder.id}
+                          reminder={reminder}
+                          onComplete={complete}
+                          onPostpone={postpone}
+                          onEdit={update}
+                          onDelete={remove}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -153,6 +246,7 @@ export const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

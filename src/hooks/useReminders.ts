@@ -153,8 +153,16 @@ export const useReminders = () => {
       if (isBefore(due, today)) overdueCount += 1;
     }
 
-    return { todayCount, weekCount, overdueCount, completedCount };
-  }, [reminders]);
+    // Counts both directions of assignment — what this user handed out and
+    // what was handed to them — since that is what the Assigned view shows.
+    const assignedCount =
+      reminders.filter((r) => r.assignedMemberId !== null && !r.completed).length +
+      Object.values(assignedByOwner)
+        .flat()
+        .filter((r) => !r.completed).length;
+
+    return { todayCount, weekCount, overdueCount, completedCount, assignedCount };
+  }, [reminders, assignedByOwner]);
 
   const assignedToMe = useMemo(
     () =>
