@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import { Calendar, Clock, Plus, Bell, Search, CreditCard } from "lucide-react";
+import { Calendar, Clock, Plus, Bell, Search, CreditCard, Wrench } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { UpcomingReminders } from "./UpcomingReminders";
 import { AddReminderDialog } from "./AddReminderDialog";
 import { ProfileMenu } from "./ProfileMenu";
 import { LoyaltyCardsDialog } from "./LoyaltyCardsDialog";
+import { SmartPagerDialog } from "./SmartPagerDialog";
 import { AssignedRemindersPanel } from "./AssignedRemindersPanel";
 import { useReminders } from "@/hooks/useReminders";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
@@ -22,6 +23,7 @@ export const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>();
   const [searchQuery, setSearchQuery] = useState("");
   const [cardsOpen, setCardsOpen] = useState(false);
+  const [pagerOpen, setPagerOpen] = useState(false);
   const [filter, setFilter] = useState<ReminderFilter | null>(null);
   const {
     reminders,
@@ -118,6 +120,14 @@ export const Dashboard = () => {
               >
                 <CreditCard className="mr-2 h-5 w-5" />
                 Cards
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setPagerOpen(true)}
+                aria-label="Smart Pager"
+              >
+                <Wrench className="h-5 w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Pager</span>
               </Button>
               <AddReminderDialog
                 preSelectedCategory={selectedCategory}
@@ -303,6 +313,7 @@ export const Dashboard = () => {
       </main>
 
       <LoyaltyCardsDialog open={cardsOpen} onOpenChange={setCardsOpen} />
+      <SmartPagerDialog open={pagerOpen} onOpenChange={setPagerOpen} />
     </div>
   );
 };

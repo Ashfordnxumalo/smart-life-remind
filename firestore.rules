@@ -74,6 +74,16 @@ service cloud.firestore {
           && request.resource.data.keys().hasAll(['retailer', 'cardNumber', 'barcodeFormat']);
       }
 
+      // Smart Pager. A geyser is serviced once and the whole household needs
+      // the number, so linked members read it by default. Writes stay with the
+      // owner — shared visibility isn't shared editing.
+      match /serviceProviders/{id} {
+        allow read: if isOwner(uid) || isLinkedTo(uid);
+        allow update, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasAll(['service', 'providerName', 'category']);
+      }
+
       // Written only by acceptFamilyInvite/removeFamilyMember via the Admin
       // SDK. Readable by the owner so the app knows whose cards to pull in,
       // and by the linked account so each side can see the link exists.
