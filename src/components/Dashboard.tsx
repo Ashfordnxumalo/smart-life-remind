@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Calendar, Clock, Plus, Bell, Search, CreditCard, Wrench } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -103,7 +103,7 @@ export const Dashboard = () => {
               </h1>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-4">
               <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                 <Input
@@ -117,14 +117,19 @@ export const Dashboard = () => {
                 variant="outline"
                 onClick={() => setCardsOpen(true)}
                 aria-label="Loyalty cards"
+                className="shrink-0 px-3 sm:px-4"
               >
-                <CreditCard className="mr-2 h-5 w-5" />
+                <CreditCard className="mr-1.5 h-5 w-5 sm:mr-2" />
                 Cards
               </Button>
+              {/* Square and label-less on phones. Cards keeps its label, so
+                  the icon-only buttons give up their padding instead: four
+                  full-width controls squeezed the wordmark down to one letter. */}
               <Button
                 variant="outline"
                 onClick={() => setPagerOpen(true)}
                 aria-label="Smart Pager"
+                className="w-10 shrink-0 px-0 sm:w-auto sm:px-4"
               >
                 <Wrench className="h-5 w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Pager</span>
@@ -158,7 +163,7 @@ export const Dashboard = () => {
 
             {/* Welcome Section */}
             <div className="rounded-2xl bg-gradient-primary p-5 text-white shadow-medium sm:p-8">
-              <h2 className="mb-2 text-2xl font-bold sm:text-3xl">Good morning! ðŸ‘‹</h2>
+              <h2 className="mb-2 text-2xl font-bold sm:text-3xl">Good morning! 👋</h2>
               <p className="mb-6 text-white/90">
                 You have {stats.todayCount} upcoming reminder{stats.todayCount === 1 ? "" : "s"} today. Stay on top of your schedule!
               </p>

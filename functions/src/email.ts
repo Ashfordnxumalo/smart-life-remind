@@ -1,4 +1,4 @@
-﻿import nodemailer from "nodemailer";
+import nodemailer from "nodemailer";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 
@@ -103,7 +103,7 @@ const icsEscape = (value: string) =>
   value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 
 /**
- * .ics attachment for calendar apps that don't take a Google link â€” Apple
+ * .ics attachment for calendar apps that don't take a Google link — Apple
  * Mail and Outlook desktop in particular. Times are floating (no TZID, no Z)
  * so clients read them as local, matching what the reminder says.
  */
@@ -158,7 +158,7 @@ interface Layout {
   secondaryNote?: string;
 }
 
-/** Table-based layout â€” the only thing mail clients render consistently. */
+/** Table-based layout — the only thing mail clients render consistently. */
 const renderHtml = ({
   heading,
   intro,

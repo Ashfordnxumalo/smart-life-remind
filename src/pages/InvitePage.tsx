@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Loader2, Users, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,7 @@ export const InvitePage = () => {
     return (
       <Shell>
         <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Checking your invitationâ€¦</p>
+        <p className="text-sm text-muted-foreground">Checking your invitation…</p>
       </Shell>
     );
   }
@@ -149,7 +149,7 @@ export const InvitePage = () => {
           onClick={handleAccept}
           disabled={phase === "accepting"}
         >
-          {phase === "accepting" ? "Linkingâ€¦" : "Accept invitation"}
+          {phase === "accepting" ? "Linking…" : "Accept invitation"}
         </Button>
       ) : (
         <>

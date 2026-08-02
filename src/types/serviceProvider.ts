@@ -4,15 +4,40 @@
  * having defaults means the common cases are one tap instead of typing.
  */
 export const PROVIDER_CATEGORIES = [
+  // Around the house — the trades you hunt for a number for at the worst
+  // possible moment, split finely because "Home Maintenance" alone buries them.
   "Home Maintenance",
+  "Plumbing",
+  "Electrical",
+  "Appliance Repair",
+  "Building & Renovation",
+  "Garden & Pool",
+  "Cleaning",
+  "Pest Control",
+  "Security",
+
+  // Cover and health
   "Insurance",
+  "Funeral Cover",
   "Medical",
+  "Dental & Optical",
+
+  // Vehicles and the bills
   "Motor",
   "Utilities",
+  "Municipal",
+  "Internet & Telecoms",
+  "Subscriptions",
+
+  // People and paperwork
   "Schooling",
+  "Childcare",
   "Financial",
+  "Tax & Accounting",
   "Legal",
   "Pets",
+  "Travel",
+
   "Other",
 ] as const;
 
@@ -59,28 +84,46 @@ export type ServiceProviderUpdate = Partial<
   Omit<ServiceProvider, "id" | "createdAt">
 >;
 
-/** Colour per category so the directory scans quickly. */
-export const categoryAccent = (category: string): string => {
-  switch (category) {
-    case "Home Maintenance":
-      return "#f59e0b";
-    case "Insurance":
-      return "#6366f1";
-    case "Medical":
-      return "#ef4444";
-    case "Motor":
-      return "#0ea5e9";
-    case "Utilities":
-      return "#10b981";
-    case "Schooling":
-      return "#8b5cf6";
-    case "Financial":
-      return "#14b8a6";
-    case "Legal":
-      return "#64748b";
-    case "Pets":
-      return "#ec4899";
-    default:
-      return "#71717a";
-  }
+/**
+ * Colour per category so the directory scans quickly. Related categories
+ * share a hue family — trades amber, cover indigo, bills emerald — so the
+ * groups read as groups rather than as twenty unrelated dots.
+ */
+const CATEGORY_COLOURS: Record<string, string> = {
+  // Trades — amber through orange
+  "Home Maintenance": "#f59e0b",
+  Plumbing: "#0891b2",
+  Electrical: "#eab308",
+  "Appliance Repair": "#d97706",
+  "Building & Renovation": "#b45309",
+  "Garden & Pool": "#65a30d",
+  Cleaning: "#22c55e",
+  "Pest Control": "#84cc16",
+  Security: "#dc2626",
+
+  // Cover and health — indigo through red
+  Insurance: "#6366f1",
+  "Funeral Cover": "#475569",
+  Medical: "#ef4444",
+  "Dental & Optical": "#f43f5e",
+
+  // Vehicles and bills — blue through teal
+  Motor: "#0ea5e9",
+  Utilities: "#10b981",
+  Municipal: "#059669",
+  "Internet & Telecoms": "#3b82f6",
+  Subscriptions: "#a855f7",
+
+  // People and paperwork — violet through slate
+  Schooling: "#8b5cf6",
+  Childcare: "#c084fc",
+  Financial: "#14b8a6",
+  "Tax & Accounting": "#0d9488",
+  Legal: "#64748b",
+  Pets: "#ec4899",
+  Travel: "#06b6d4",
 };
+
+/** Unlisted names are allowed, so anything unknown falls back to neutral. */
+export const categoryAccent = (category: string): string =>
+  CATEGORY_COLOURS[category] ?? "#71717a";

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -53,7 +53,7 @@ const AuthPage = () => {
   useEffect(() => {
     if (!user) return;
     // Someone who arrived from an invitation link came here only to
-    // authenticate â€” send them back to finish accepting rather than dropping
+    // authenticate — send them back to finish accepting rather than dropping
     // them on the dashboard with the invitation silently abandoned.
     const pendingInvite = takePendingInvite();
     navigate(pendingInvite ? `/invite?token=${encodeURIComponent(pendingInvite)}` : "/");
@@ -69,7 +69,7 @@ const AuthPage = () => {
       await createProfile(credential.user.uid, { fullName, email, planType });
 
       toast({
-        title: "Account created! ðŸŽ‰",
+        title: "Account created! 🎉",
         description: "Welcome to Smart R.",
       });
     } catch (error) {
