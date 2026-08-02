@@ -39,10 +39,17 @@ export const useGeolocation = () => {
     }
   };
 
-  const requestLocation = async () => {
+  /**
+   * Returns the fixed coordinates as well as storing them in state. Callers
+   * that awaited this and then read `latitude`/`longitude` off the hook were
+   * reading the previous render's values — the state update isn't visible to
+   * the closure that started the request — so the first click always did
+   * nothing. Returning the position gives them something to actually use.
+   */
+  const requestLocation = async (): Promise<GeolocationCoordinates | null> => {
     if (!navigator.geolocation) {
       setState(prev => ({ ...prev, error: 'Geolocation not supported' }));
-      return;
+      return null;
     }
 
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -73,6 +80,8 @@ export const useGeolocation = () => {
         title: "Location Updated",
         description: "Your location has been recorded for location-based reminders.",
       });
+
+      return position.coords;
     } catch (error: unknown) {
       let errorMessage = 'Failed to get location';
       const geoError = error as GeolocationPositionError;
@@ -97,6 +106,8 @@ export const useGeolocation = () => {
         description: errorMessage,
         variant: "destructive",
       });
+
+      return null;
     }
   };
 
