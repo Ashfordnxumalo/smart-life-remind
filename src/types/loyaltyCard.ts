@@ -50,6 +50,17 @@ export interface LoyaltyCard {
   updatedAt: string;
 }
 
+/**
+ * A card as the wallet shows it. Ownership isn't stored on the document — it
+ * comes from which account's subcollection the card was read out of — so it's
+ * attached here rather than pretended to be a Firestore field.
+ */
+export interface WalletCard extends LoyaltyCard {
+  ownerUid: string;
+  /** Name of the linked member who shared it, or null when it's your own. */
+  sharedBy: string | null;
+}
+
 export type NewLoyaltyCard = Omit<LoyaltyCard, "id" | "createdAt" | "updatedAt">;
 export type LoyaltyCardUpdate = Partial<Omit<LoyaltyCard, "id" | "createdAt">>;
 

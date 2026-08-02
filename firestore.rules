@@ -7,6 +7,21 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    // A link exists only when both accounts hold a doc pointing at the other,
+    // written together in one batch by acceptFamilyInvite. Checking the
+    // owner's side here means revoking access is a single delete.
+    function isLinkedTo(uid) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(uid)/linkedMembers/$(request.auth.uid));
+    }
+
+    // Invitations carry both parties' email addresses and a token that grants
+    // a link into someone's family. Clients never touch them directly — the
+    // getInvitePreview and acceptFamilyInvite callables mediate all access.
+    match /invitations/{token} {
+      allow read, write: if false;
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
       // planType is deliberately not client-writable — it gates the family-member
@@ -36,12 +51,23 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
-      // Loyalty card numbers are sensitive — strictly owner-only, and
-      // never readable by another signed-in user.
+      // Card numbers are sensitive, so reads are limited to the owner and to
+      // accounts they have explicitly linked with by accepting an invitation.
+      // Writes stay owner-only: a linked member can present your card, not
+      // edit or delete it.
       match /loyaltyCards/{id} {
-        allow read, update, delete: if isOwner(uid);
+        allow read: if isOwner(uid) || isLinkedTo(uid);
+        allow update, delete: if isOwner(uid);
         allow create: if isOwner(uid)
           && request.resource.data.keys().hasAll(['retailer', 'cardNumber', 'barcodeFormat']);
+      }
+
+      // Written only by acceptFamilyInvite/removeFamilyMember via the Admin
+      // SDK. Readable by the owner so the app knows whose cards to pull in,
+      // and by the linked account so each side can see the link exists.
+      match /linkedMembers/{otherUid} {
+        allow read: if isOwner(uid) || request.auth.uid == otherUid;
+        allow write: if false;
       }
 
       match /locationState/{id} {

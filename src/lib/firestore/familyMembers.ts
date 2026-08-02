@@ -23,6 +23,9 @@ export const subscribeToFamilyMembers = (
           relationship: data.relationship ?? null,
           avatarUrl: data.avatarUrl ?? null,
           isActive: data.isActive,
+          // Members added before invitations existed have neither field.
+          linkStatus: (data.linkStatus as FamilyMember["linkStatus"]) ?? "none",
+          linkedUid: (data.linkedUid as string | null) ?? null,
           createdAt: toISO(data.createdAt) ?? "",
           updatedAt: toISO(data.updatedAt) ?? "",
         } satisfies FamilyMember;
@@ -38,7 +41,10 @@ interface FamilyMemberInput {
   relationship?: string | null;
 }
 
-const addFamilyMemberCallable = httpsCallable<FamilyMemberInput, { id: string }>(functions, "addFamilyMember");
+const addFamilyMemberCallable = httpsCallable<FamilyMemberInput, { id: string; invited: boolean }>(
+  functions,
+  "addFamilyMember"
+);
 const updateFamilyMemberCallable = httpsCallable<FamilyMemberInput & { id: string }, { id: string }>(
   functions,
   "updateFamilyMember"
@@ -47,7 +53,16 @@ const removeFamilyMemberCallable = httpsCallable<{ id: string }, { id: string }>
 
 export const addFamilyMember = async (input: FamilyMemberInput) => {
   const result = await addFamilyMemberCallable(input);
-  return result.data.id;
+  return result.data;
+};
+
+const resendInviteCallable = httpsCallable<{ memberId: string }, { ok: boolean }>(
+  functions,
+  "resendFamilyInvite"
+);
+
+export const resendFamilyInvite = async (memberId: string) => {
+  await resendInviteCallable({ memberId });
 };
 
 export const updateFamilyMember = async (id: string, input: FamilyMemberInput) => {

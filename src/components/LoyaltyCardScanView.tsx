@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Barcode } from "@/components/Barcode";
 import { RetailerLogo } from "@/components/RetailerLogo";
 import { useToast } from "@/hooks/use-toast";
-import { getCardColor, type LoyaltyCard } from "@/types/loyaltyCard";
+import { getCardColor, type WalletCard } from "@/types/loyaltyCard";
 
 interface LoyaltyCardScanViewProps {
-  card: LoyaltyCard;
+  card: WalletCard;
   onClose: () => void;
-  onEdit: (card: LoyaltyCard) => void;
-  onDelete: (card: LoyaltyCard) => void;
+  onEdit: (card: WalletCard) => void;
+  onDelete: (card: WalletCard) => void;
 }
 
 /** Groups digits so a cashier can read the number aloud without losing place. */
@@ -184,23 +184,33 @@ export const LoyaltyCardScanView = ({
             )}
           </div>
 
+          {/* A shared card is presented, not managed — the rules reject writes
+              from anyone but the owner, so the actions aren't offered either. */}
           <div className="flex gap-2 border-t border-neutral-200 bg-white px-4 py-3">
-            <Button
-              variant="outline"
-              className="flex-1 text-black"
-              onClick={() => onEdit(card)}
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10"
-              onClick={() => onDelete(card)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
+            {card.sharedBy ? (
+              <p className="flex-1 text-center text-sm text-neutral-500">
+                Shared by {card.sharedBy}. Only they can edit or remove it.
+              </p>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="flex-1 text-black"
+                  onClick={() => onEdit(card)}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={() => onDelete(card)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </>
+            )}
           </div>
         </DialogPrimitive.Content>
       </DialogPortal>

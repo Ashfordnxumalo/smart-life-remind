@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, Edit, Trash2, Mail, Phone } from "lucide-react";
+import { Users, Plus, Edit, Trash2, Mail, Phone, Link as LinkIcon } from "lucide-react";
 import { FirebaseError } from "firebase/app";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { getProfile } from "@/lib/firestore/profile";
 import {
   addFamilyMember,
   removeFamilyMember,
+  resendFamilyInvite,
   subscribeToFamilyMembers,
   updateFamilyMember,
 } from "@/lib/firestore/familyMembers";
@@ -33,6 +34,8 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
   const [userPlan, setUserPlan] = useState<PlanType>('family');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
+  /** Member id whose invitation is currently being sent, or null. */
+  const [resending, setResending] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -82,8 +85,15 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
         await updateFamilyMember(editingMember.id, payload);
         toast({ title: "Success", description: "Family member updated successfully." });
       } else {
-        await addFamilyMember(payload);
-        toast({ title: "Success", description: "Family member added successfully." });
+        const { invited } = await addFamilyMember(payload);
+        toast({
+          title: "Member added",
+          description: invited
+            ? `We've emailed ${formData.email} an invitation to link accounts.`
+            : formData.email
+              ? "Added, but the invitation email couldn't be sent. You can resend it from the list."
+              : "Add an email address to invite them to link accounts.",
+        });
       }
 
       setFormData({ name: "", email: "", phone: "", relationship: "" });
@@ -95,6 +105,23 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
       toast({ title: "Error", description, variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async (memberId: string) => {
+    setResending(memberId);
+    try {
+      await resendFamilyInvite(memberId);
+      toast({
+        title: "Invitation sent",
+        description: "Any earlier link for this member has been revoked.",
+      });
+    } catch (error) {
+      const description =
+        error instanceof FirebaseError ? error.message : "Couldn't send the invitation.";
+      toast({ title: "Error", description, variant: "destructive" });
+    } finally {
+      setResending(null);
     }
   };
 
@@ -189,6 +216,9 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         placeholder="email@example.com"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        We'll email an invitation to link accounts and share cards.
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
@@ -279,6 +309,41 @@ export const FamilyMembersDialog = ({ open, onOpenChange }: FamilyMembersDialogP
                                   <Phone className="w-3 h-3" />
                                   <span>{member.phone}</span>
                                 </div>
+                              )}
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              {member.linkStatus === "linked" ? (
+                                <Badge className="bg-category-personal/15 text-category-personal hover:bg-category-personal/15">
+                                  <LinkIcon className="mr-1 h-3 w-3" />
+                                  Linked
+                                </Badge>
+                              ) : member.linkStatus === "invited" ? (
+                                <>
+                                  <Badge variant="secondary">Invitation sent</Badge>
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="h-auto p-0 text-xs"
+                                    disabled={resending === member.id}
+                                    onClick={() => handleResend(member.id)}
+                                  >
+                                    {resending === member.id ? "Sending…" : "Resend"}
+                                  </Button>
+                                </>
+                              ) : member.email ? (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs"
+                                  disabled={resending === member.id}
+                                  onClick={() => handleResend(member.id)}
+                                >
+                                  {resending === member.id ? "Sending…" : "Send invitation"}
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">
+                                  Add an email to invite them
+                                </span>
                               )}
                             </div>
                           </div>

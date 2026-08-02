@@ -42,6 +42,13 @@ export interface Reminder {
 export type NewReminder = Omit<Reminder, "id" | "completed" | "completedAt" | "createdAt" | "updatedAt">;
 export type ReminderUpdate = Partial<Omit<Reminder, "id" | "createdAt">>;
 
+/**
+ * 'none'    — no address on file, or the invitation failed to send
+ * 'invited' — invitation emailed, not yet accepted
+ * 'linked'  — accepted; both accounts point at each other and can share cards
+ */
+export type MemberLinkStatus = "none" | "invited" | "linked";
+
 export interface FamilyMember {
   id: string;
   name: string;
@@ -50,8 +57,19 @@ export interface FamilyMember {
   relationship: string | null;
   avatarUrl: string | null;
   isActive: boolean;
+  linkStatus: MemberLinkStatus;
+  /** The member's own account, once they've accepted. */
+  linkedUid: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Another account this user is linked to, from users/{uid}/linkedMembers. */
+export interface LinkedMember {
+  uid: string;
+  displayName: string;
+  email: string | null;
+  linkedAt: string;
 }
 
 export type PlanType = "family" | "business";

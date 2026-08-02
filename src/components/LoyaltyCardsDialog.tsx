@@ -18,7 +18,12 @@ import { useLoyaltyCards } from "@/hooks/useLoyaltyCards";
 import { LoyaltyCardFormDialog } from "@/components/LoyaltyCardFormDialog";
 import { LoyaltyCardScanView } from "@/components/LoyaltyCardScanView";
 import { RetailerLogo } from "@/components/RetailerLogo";
-import { getCardColor, type LoyaltyCard, type NewLoyaltyCard } from "@/types/loyaltyCard";
+import {
+  getCardColor,
+  type LoyaltyCard,
+  type NewLoyaltyCard,
+  type WalletCard,
+} from "@/types/loyaltyCard";
 
 interface LoyaltyCardsDialogProps {
   open: boolean;
@@ -34,8 +39,8 @@ export const LoyaltyCardsDialog = ({ open, onOpenChange }: LoyaltyCardsDialogPro
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<LoyaltyCard | null>(null);
-  const [scanning, setScanning] = useState<LoyaltyCard | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<LoyaltyCard | null>(null);
+  const [scanning, setScanning] = useState<WalletCard | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<WalletCard | null>(null);
   const { toast } = useToast();
 
   const filtered = useMemo(() => {
@@ -175,7 +180,7 @@ export const LoyaltyCardsDialog = ({ open, onOpenChange }: LoyaltyCardsDialogPro
                             {maskNumber(card.cardNumber)}
                           </p>
                           <p className="mt-0.5 text-[10px] uppercase tracking-wide text-white/60">
-                            Tap to scan
+                            {card.sharedBy ? `Shared by ${card.sharedBy}` : "Tap to scan"}
                           </p>
                         </div>
                       </div>

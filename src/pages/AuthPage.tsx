@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { takePendingInvite } from "@/lib/firestore/invitations";
 
 const authErrorMessage = (error: unknown): string => {
   if (error instanceof FirebaseError) {
@@ -46,9 +47,12 @@ const AuthPage = () => {
   const loading = authLoading || submitting;
 
   useEffect(() => {
-    if (user) {
-      navigate("/");
-    }
+    if (!user) return;
+    // Someone who arrived from an invitation link came here only to
+    // authenticate — send them back to finish accepting rather than dropping
+    // them on the dashboard with the invitation silently abandoned.
+    const pendingInvite = takePendingInvite();
+    navigate(pendingInvite ? `/invite?token=${encodeURIComponent(pendingInvite)}` : "/");
   }, [user, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {

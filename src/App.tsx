@@ -11,6 +11,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const AllRemindersPage = lazy(() => import("./pages/AllRemindersPage"));
+const InvitePage = lazy(() => import("./pages/InvitePage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/activity" element={<ActivityPage />} />
             <Route path="/reminders" element={<AllRemindersPage />} />
+            <Route path="/invite" element={<InvitePage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
