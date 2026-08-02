@@ -1,11 +1,11 @@
-import { LegalPageLayout, LegalSection } from "@/components/LegalPageLayout";
+﻿import { LegalPageLayout, LegalSection } from "@/components/LegalPageLayout";
 
 export default function PrivacyPage() {
   return (
     <LegalPageLayout title="Privacy Policy" lastUpdated="29 July 2026">
       <LegalSection heading="What this covers">
         <p>
-          SmartRemind helps you track reminders for appointments, documents, subscriptions
+          Smart R helps you track reminders for appointments, documents, subscriptions
           and personal events, and optionally share them with family or team members. This
           policy explains what the app stores, where it is stored, and what control you have
           over it.
@@ -16,27 +16,27 @@ export default function PrivacyPage() {
         <p>The app stores only what you enter or explicitly enable:</p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <strong className="text-foreground">Account details</strong> — your email address,
+            <strong className="text-foreground">Account details</strong> â€” your email address,
             the name you provide at sign-up, and your selected plan (family or business).
             Passwords are handled by Firebase Authentication and are never visible to the app.
           </li>
           <li>
-            <strong className="text-foreground">Reminders</strong> — titles, descriptions,
+            <strong className="text-foreground">Reminders</strong> â€” titles, descriptions,
             categories, priorities, due dates and times, completion status, and any optional
             location you attach to a reminder.
           </li>
           <li>
-            <strong className="text-foreground">Family and team members</strong> — the names,
+            <strong className="text-foreground">Family and team members</strong> â€” the names,
             relationships, email addresses and phone numbers you add for people you assign
             reminders to. You are responsible for having their permission to store these.
           </li>
           <li>
-            <strong className="text-foreground">Location</strong> — only if you switch on
+            <strong className="text-foreground">Location</strong> â€” only if you switch on
             location services. The app keeps your most recent position so it can tell you when
             you are near a reminder location. It does not keep a history of your movements.
           </li>
           <li>
-            <strong className="text-foreground">Preferences</strong> — theme, notification and
+            <strong className="text-foreground">Preferences</strong> â€” theme, notification and
             location-tracking settings.
           </li>
         </ul>

@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+﻿import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { db } from "./admin.js";
@@ -34,7 +34,7 @@ export const addFamilyMember = onCall<AddFamilyMemberInput>(
     const membersRef = db.collection(`users/${uid}/familyMembers`);
     const newMemberRef = membersRef.doc();
 
-    let inviterName = "A SmartRemind user";
+    let inviterName = "A Smart R user";
 
     await db.runTransaction(async (tx) => {
       const profileSnap = await tx.get(profileRef);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Calendar, Clock, Plus, Bell, Search, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export const Dashboard = () => {
                 <Bell className="h-5 w-5 text-white" />
               </div>
               <h1 className="truncate bg-gradient-primary bg-clip-text text-lg font-bold text-transparent sm:text-2xl">
-                SmartRemind
+                Smart R
               </h1>
             </div>
 
@@ -100,7 +100,7 @@ export const Dashboard = () => {
 
             {/* Welcome Section */}
             <div className="rounded-2xl bg-gradient-primary p-5 text-white shadow-medium sm:p-8">
-              <h2 className="mb-2 text-2xl font-bold sm:text-3xl">Good morning! 👋</h2>
+              <h2 className="mb-2 text-2xl font-bold sm:text-3xl">Good morning! ðŸ‘‹</h2>
               <p className="mb-6 text-white/90">
                 You have {stats.todayCount} upcoming reminder{stats.todayCount === 1 ? "" : "s"} today. Stay on top of your schedule!
               </p>

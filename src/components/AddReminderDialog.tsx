@@ -87,6 +87,7 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
   const [selectedPriority, setSelectedPriority] = useState("medium");
   const [selectedRepeat, setSelectedRepeat] = useState("none");
   const [date, setDate] = useState<Date>();
+  const [dateOpen, setDateOpen] = useState(false);
   const [time, setTime] = useState("09:00");
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -271,7 +272,7 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
               <Label className="text-sm font-semibold">
                 Date <span className="text-destructive">*</span>
               </Label>
-              <Popover>
+              <Popover open={dateOpen} onOpenChange={setDateOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -288,7 +289,12 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
                   <CalendarComponent
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
+                    onSelect={(next) => {
+                      setDate(next);
+                      // Picking a date is the whole purpose of the popover, so
+                      // dismiss it rather than leaving it covering the form.
+                      if (next) setDateOpen(false);
+                    }}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                   />

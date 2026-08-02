@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -17,6 +17,9 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { takePendingInvite } from "@/lib/firestore/invitations";
+import { PasswordInput } from "@/components/PasswordInput";
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
+import { APP_NAME, APP_TAGLINE } from "@/config/branding";
 
 const authErrorMessage = (error: unknown): string => {
   if (error instanceof FirebaseError) {
@@ -44,12 +47,13 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [planType, setPlanType] = useState<'family' | 'business'>('family');
   const navigate = useNavigate();
+  const [forgotOpen, setForgotOpen] = useState(false);
   const loading = authLoading || submitting;
 
   useEffect(() => {
     if (!user) return;
     // Someone who arrived from an invitation link came here only to
-    // authenticate — send them back to finish accepting rather than dropping
+    // authenticate â€” send them back to finish accepting rather than dropping
     // them on the dashboard with the invitation silently abandoned.
     const pendingInvite = takePendingInvite();
     navigate(pendingInvite ? `/invite?token=${encodeURIComponent(pendingInvite)}` : "/");
@@ -65,8 +69,8 @@ const AuthPage = () => {
       await createProfile(credential.user.uid, { fullName, email, planType });
 
       toast({
-        title: "Account created! 🎉",
-        description: "Welcome to SmartRemind.",
+        title: "Account created! ðŸŽ‰",
+        description: "Welcome to Smart R.",
       });
     } catch (error) {
       toast({
@@ -108,10 +112,8 @@ const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">SmartRemind</CardTitle>
-          <CardDescription>
-            Your intelligent reminder management system
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">{APP_NAME}</CardTitle>
+          <CardDescription>{APP_TAGLINE}</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -134,10 +136,19 @@ const AuthPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => setForgotOpen(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <PasswordInput
                     id="signin-password"
-                    type="password"
+                    autoComplete="current-password"
                     placeholder="Your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -200,9 +211,9 @@ const AuthPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input
+                  <PasswordInput
                     id="signup-password"
-                    type="password"
+                    autoComplete="new-password"
                     placeholder="Choose a password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -218,6 +229,12 @@ const AuthPage = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      <ForgotPasswordDialog
+        open={forgotOpen}
+        onOpenChange={setForgotOpen}
+        defaultEmail={email}
+      />
     </div>
   );
 };

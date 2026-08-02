@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+﻿import nodemailer from "nodemailer";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 
@@ -28,7 +28,7 @@ export const APP_URL = defineString("APP_URL", {
   default: "https://mnxrides.co.za/smartreminder/",
 });
 
-const FROM_NAME = "SmartRemind";
+const FROM_NAME = "Smart R";
 const FROM_ADDRESS = "support@mnxrides.co.za";
 
 const appUrl = () => APP_URL.value().replace(/\/+$/, "");
@@ -103,7 +103,7 @@ const icsEscape = (value: string) =>
   value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 
 /**
- * .ics attachment for calendar apps that don't take a Google link — Apple
+ * .ics attachment for calendar apps that don't take a Google link â€” Apple
  * Mail and Outlook desktop in particular. Times are floating (no TZID, no Z)
  * so clients read them as local, matching what the reminder says.
  */
@@ -122,11 +122,13 @@ export const buildIcs = (event: CalendarEvent, uid: string): string => {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//SmartRemind//EN",
+    "PRODID:-//Smart R//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:${uid}@smartremind`,
+    // Domain-ish token, not the display name: a space here is asking for
+    // trouble in a field calendar clients use to dedupe events.
+    `UID:${uid}@smart-r`,
     `DTSTAMP:${stamp}`,
     start,
     end,
@@ -156,7 +158,7 @@ interface Layout {
   secondaryNote?: string;
 }
 
-/** Table-based layout — the only thing mail clients render consistently. */
+/** Table-based layout â€” the only thing mail clients render consistently. */
 const renderHtml = ({
   heading,
   intro,
@@ -169,7 +171,7 @@ const renderHtml = ({
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">
     <tr>
       <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px 24px;">
-        <span style="color:#ffffff;font-size:18px;font-weight:700;">SmartRemind</span>
+        <span style="color:#ffffff;font-size:18px;font-weight:700;">Smart R</span>
       </td>
     </tr>
     <tr>
@@ -199,7 +201,7 @@ const renderHtml = ({
     </tr>
     <tr>
       <td style="padding:16px 24px;background:#fafafa;font-size:11px;color:#a1a1aa;">
-        Sent by SmartRemind. If this wasn't meant for you, you can ignore it.
+        Sent by Smart R. If this wasn't meant for you, you can ignore it.
       </td>
     </tr>
   </table>
@@ -276,8 +278,8 @@ export const sendReminderEmail = async (args: ReminderEmailArgs) => {
 
   const heading = args.assignedBy ? "A reminder was assigned to you" : "Your reminder is set";
   const intro = args.assignedBy
-    ? `${args.assignedBy} assigned you this reminder on SmartRemind.`
-    : "This reminder has been added to your SmartRemind account.";
+    ? `${args.assignedBy} assigned you this reminder on Smart R.`
+    : "This reminder has been added to your Smart R account.";
 
   const rows: Array<[string, string]> = [
     ["Reminder", args.title],
@@ -294,7 +296,7 @@ export const sendReminderEmail = async (args: ReminderEmailArgs) => {
     bodyRows: rows,
     primaryLabel: "Add to calendar",
     primaryHref: calendarLink,
-    secondaryNote: `Prefer another calendar? Open the attached invite file. You can also <a href="${appUrl()}/" style="color:#6366f1;">view this in SmartRemind</a>.`,
+    secondaryNote: `Prefer another calendar? Open the attached invite file. You can also <a href="${appUrl()}/" style="color:#6366f1;">view this in Smart R</a>.`,
   });
 
   const text = [
@@ -310,7 +312,7 @@ export const sendReminderEmail = async (args: ReminderEmailArgs) => {
     args.location ? `Location: ${args.location}` : "",
     "",
     `Add to calendar: ${calendarLink}`,
-    `Open SmartRemind: ${appUrl()}/`,
+    `Open Smart R: ${appUrl()}/`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -341,7 +343,7 @@ export const sendFamilyInviteEmail = async (args: InviteEmailArgs) => {
 
   const html = renderHtml({
     heading: `${args.inviterName} wants to link with you`,
-    intro: `You've been invited to join ${args.inviterName}'s family on SmartRemind. Once you accept, you can share reminders and loyalty cards with each other.`,
+    intro: `You've been invited to join ${args.inviterName}'s family on Smart R. Once you accept, you can share reminders and loyalty cards with each other.`,
     bodyRows: [
       ["Invited by", args.inviterName],
       ["Invited as", args.inviteeName],
@@ -352,7 +354,7 @@ export const sendFamilyInviteEmail = async (args: InviteEmailArgs) => {
   });
 
   const text = [
-    `${args.inviterName} wants to link with you on SmartRemind.`,
+    `${args.inviterName} wants to link with you on Smart R.`,
     "",
     `Once you accept, you can share reminders and loyalty cards with each other.`,
     "",
@@ -363,7 +365,7 @@ export const sendFamilyInviteEmail = async (args: InviteEmailArgs) => {
 
   return send({
     to: args.to,
-    subject: `${args.inviterName} invited you to SmartRemind`,
+    subject: `${args.inviterName} invited you to Smart R`,
     html,
     text,
   });

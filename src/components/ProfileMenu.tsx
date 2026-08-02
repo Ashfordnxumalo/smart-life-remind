@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { User, LogOut, Users, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { signOut } from "firebase/auth";
@@ -46,7 +46,7 @@ export const ProfileMenu = () => {
   if (!user) {
     return (
       // Routed via <Link> rather than window.location so the router's
-      // basename applies — a raw "/auth" escapes the app when it is served
+      // basename applies â€” a raw "/auth" escapes the app when it is served
       // from a subdirectory.
       <Button variant="outline" asChild>
         <Link to="/auth">
@@ -74,7 +74,7 @@ export const ProfileMenu = () => {
             <div className="flex flex-col space-y-1 leading-none">
               <p className="font-medium">{user.email}</p>
               <p className="w-[200px] truncate text-sm text-muted-foreground">
-                Welcome to SmartRemind
+                Welcome to Smart R
               </p>
             </div>
           </div>

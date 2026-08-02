@@ -1,12 +1,12 @@
-export const FirebaseSetupNotice = () => (
+﻿export const FirebaseSetupNotice = () => (
   <div className="min-h-screen flex items-center justify-center bg-muted p-4">
     <div className="max-w-lg w-full bg-background border rounded-xl shadow-sm p-8 space-y-4">
       <h1 className="text-xl font-bold">Firebase isn't configured yet</h1>
       <p className="text-sm text-muted-foreground">
-        SmartRemind needs a Firebase project before it can run. Copy{" "}
+        Smart R needs a Firebase project before it can run. Copy{" "}
         <code className="bg-muted px-1 py-0.5 rounded">.env.example</code> to{" "}
         <code className="bg-muted px-1 py-0.5 rounded">.env</code> and fill in your Firebase
-        Web app config (Project settings → General → Your apps → Web, in the Firebase console).
+        Web app config (Project settings â†’ General â†’ Your apps â†’ Web, in the Firebase console).
       </p>
       <p className="text-sm text-muted-foreground">
         Then restart the dev server. See the migration plan for the full prerequisite checklist

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 
 export const AppFooter = () => {
   const year = new Date().getFullYear();
@@ -8,7 +8,7 @@ export const AppFooter = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
           <p className="text-xs text-muted-foreground">
-            &copy; {year} SmartRemind. All rights reserved.
+            &copy; {year} Smart R. All rights reserved.
           </p>
 
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">

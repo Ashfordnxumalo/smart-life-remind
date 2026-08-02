@@ -41,6 +41,7 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("medium");
   const [date, setDate] = useState<Date>();
+  const [dateOpen, setDateOpen] = useState(false);
   const [time, setTime] = useState("09:00");
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -189,7 +190,7 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
               <Label className="text-sm font-semibold">
                 Date <span className="text-destructive">*</span>
               </Label>
-              <Popover>
+              <Popover open={dateOpen} onOpenChange={setDateOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -206,7 +207,10 @@ export const EditReminderDialog = ({ reminder, open, onOpenChange, onUpdate }: E
                   <CalendarComponent
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
+                    onSelect={(next) => {
+                      setDate(next);
+                      if (next) setDateOpen(false);
+                    }}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                   />

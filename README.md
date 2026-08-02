@@ -1,17 +1,17 @@
-# SmartRemind
+﻿# Smart R
 
-An intelligent reminder management app — appointments, documents, subscriptions, and personal events, with optional location-based reminders and family/team member assignment.
+An intelligent reminder management app â€” appointments, documents, subscriptions, and personal events, with optional location-based reminders and family/team member assignment.
 
 ## Backend
 
-This project runs on **Firebase**: Firebase Authentication (email/password), Cloud Firestore, and Cloud Functions. It does not use Supabase, despite some earlier scaffolding history — see `firestore.rules`, `firestore.indexes.json`, and `functions/` for the backend definition.
+This project runs on **Firebase**: Firebase Authentication (email/password), Cloud Firestore, and Cloud Functions. It does not use Supabase, despite some earlier scaffolding history â€” see `firestore.rules`, `firestore.indexes.json`, and `functions/` for the backend definition.
 
 ### First-time setup
 
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com).
-2. Enable **Email/Password** sign-in under Authentication → Sign-in method.
+2. Enable **Email/Password** sign-in under Authentication â†’ Sign-in method.
 3. Create a **Firestore** database (production mode).
-4. Register a **Web app** in the project (Project settings → General → Your apps), copy the config, and fill in `.env` (copy `.env.example` first):
+4. Register a **Web app** in the project (Project settings â†’ General â†’ Your apps), copy the config, and fill in `.env` (copy `.env.example` first):
    ```sh
    cp .env.example .env
    ```
@@ -24,7 +24,7 @@ This project runs on **Firebase**: Firebase Authentication (email/password), Clo
    cd functions && npm install && cd ..
    firebase deploy --only functions
    ```
-   Without this, most of the app works (auth, reminders, settings, location), but family-member add/remove and the reminder-assignment notification will fail — those specifically require the deployed callables.
+   Without this, most of the app works (auth, reminders, settings, location), but family-member add/remove and the reminder-assignment notification will fail â€” those specifically require the deployed callables.
 
 ## Local development
 
@@ -54,4 +54,4 @@ Navigate to the file, click the pencil icon, make your changes, and commit.
 
 **Use GitHub Codespaces**
 
-From the repo's main page, click Code → Codespaces → New codespace.
+From the repo's main page, click Code â†’ Codespaces â†’ New codespace.

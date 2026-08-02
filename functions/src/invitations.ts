@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+﻿import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
 import { db } from "./admin.js";
@@ -8,7 +8,7 @@ const INVITE_TTL_DAYS = 14;
 
 /**
  * Invitations live in a top-level collection keyed by an unguessable token and
- * are never client-readable — they carry both parties' email addresses, and
+ * are never client-readable â€” they carry both parties' email addresses, and
  * the token is the only thing standing between a stranger and a link into
  * someone's family. Everything goes through the callables below.
  */
@@ -65,7 +65,7 @@ export const createAndSendInvite = async (args: {
 /**
  * Shown on the invite page before the recipient signs in, so they can see who
  * is inviting them rather than being asked to authenticate on blind faith.
- * Deliberately unauthenticated — possession of the token is the credential —
+ * Deliberately unauthenticated â€” possession of the token is the credential â€”
  * and returns only what the page needs to render.
  */
 export const getInvitePreview = onCall<{ token: string }>(async (request) => {
@@ -198,7 +198,7 @@ export const resendFamilyInvite = onCall<{ memberId: string }>(
 
     await createAndSendInvite({
       inviterUid: uid,
-      inviterName: (profile.data()?.fullName as string) ?? "A SmartRemind user",
+      inviterName: (profile.data()?.fullName as string) ?? "A Smart R user",
       memberId,
       inviteeName: member.name as string,
       inviteeEmail: member.email as string,
