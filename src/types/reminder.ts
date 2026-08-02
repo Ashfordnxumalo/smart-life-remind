@@ -30,6 +30,13 @@ export interface Reminder {
   completed: boolean;
   completedAt: string | null;
   assignedMemberId: string | null;
+  /**
+   * Account of the assigned member, when that member is a linked user rather
+   * than just a name on the roster. Denormalised onto the reminder because
+   * security rules can't follow assignedMemberId to the member document
+   * cheaply, and this is what grants the assignee read access.
+   */
+  assignedUid: string | null;
   reminderLocation: string | null;
   locationLat: number | null;
   locationLng: number | null;

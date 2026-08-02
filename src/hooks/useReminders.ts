@@ -7,15 +7,27 @@ import {
   deleteReminder,
   postponeReminder,
   reopenReminder,
+  subscribeToAssignedReminders,
   subscribeToReminders,
   updateReminder,
 } from "@/lib/firestore/reminders";
-import type { NewReminder, Reminder, ReminderUpdate } from "@/types/reminder";
+import { subscribeToLinkedMembers } from "@/lib/firestore/invitations";
+import type { LinkedMember, NewReminder, Reminder, ReminderUpdate } from "@/types/reminder";
+
+/** A reminder someone else owns and assigned to the signed-in user. */
+export interface AssignedReminder extends Reminder {
+  ownerUid: string;
+  assignedByName: string;
+}
 
 export const useReminders = () => {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [linked, setLinked] = useState<LinkedMember[]>([]);
+  const [assignedByOwner, setAssignedByOwner] = useState<
+    Record<string, AssignedReminder[]>
+  >({});
 
   useEffect(() => {
     if (!user) {
@@ -32,6 +44,46 @@ export const useReminders = () => {
 
     return unsubscribe;
   }, [user]);
+
+  // Tasks other people assigned to this user. They live under the assigner's
+  // account, so each linked account needs its own listener.
+  useEffect(() => {
+    if (!user) {
+      setLinked([]);
+      return;
+    }
+    return subscribeToLinkedMembers(user.uid, setLinked, (error) =>
+      console.error("Failed to load linked members:", error)
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || linked.length === 0) {
+      setAssignedByOwner({});
+      return;
+    }
+
+    const unsubscribes = linked.map((member) =>
+      subscribeToAssignedReminders(
+        member.uid,
+        user.uid,
+        (data) =>
+          setAssignedByOwner((prev) => ({
+            ...prev,
+            [member.uid]: data.map((reminder) => ({
+              ...reminder,
+              ownerUid: member.uid,
+              assignedByName: member.displayName,
+            })),
+          })),
+        (error) =>
+          // One person's feed failing shouldn't empty the whole assigned list.
+          console.error(`Failed to load reminders assigned by ${member.uid}:`, error)
+      )
+    );
+
+    return () => unsubscribes.forEach((fn) => fn());
+  }, [user, linked]);
 
   const create = useCallback(
     async (data: NewReminder) => {
@@ -104,5 +156,45 @@ export const useReminders = () => {
     return { todayCount, weekCount, overdueCount, completedCount };
   }, [reminders]);
 
-  return { reminders, loading, stats, create, update, complete, reopen, postpone, remove };
+  const assignedToMe = useMemo(
+    () =>
+      Object.values(assignedByOwner)
+        .flat()
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+    [assignedByOwner]
+  );
+
+  /** Tasks this user handed to someone else. */
+  const assignedByMe = useMemo(
+    () => reminders.filter((r) => r.assignedMemberId !== null),
+    [reminders]
+  );
+
+  /**
+   * Completing a task assigned to you writes to the assigner's document, which
+   * the rules permit for the completed fields only — so this can't reuse the
+   * owner-scoped complete() above.
+   */
+  const completeAssigned = useCallback(
+    async (reminder: AssignedReminder) => {
+      if (!user) throw new Error("Must be signed in.");
+      await completeReminder(reminder.ownerUid, reminder.id);
+    },
+    [user]
+  );
+
+  return {
+    reminders,
+    assignedToMe,
+    assignedByMe,
+    loading,
+    stats,
+    create,
+    update,
+    complete,
+    completeAssigned,
+    reopen,
+    postpone,
+    remove,
+  };
 };

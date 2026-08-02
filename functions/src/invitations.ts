@@ -133,6 +133,50 @@ export const acceptFamilyInvite = onCall<{ token: string }>(async (request) => {
     acceptedAt: FieldValue.serverTimestamp(),
   });
 
+  // The accepter needs the inviter on their own roster too, or the link is
+  // invisible from their side and they can't assign anything back. Reuse an
+  // existing entry for the same person rather than creating a duplicate.
+  const existing = await db
+    .collection(`users/${uid}/familyMembers`)
+    .where("linkedUid", "==", inviterUid)
+    .limit(1)
+    .get();
+
+  const inviterEmail = (inviter?.email as string | null) ?? null;
+  const byEmail = existing.empty && inviterEmail
+    ? await db
+        .collection(`users/${uid}/familyMembers`)
+        .where("email", "==", inviterEmail)
+        .limit(1)
+        .get()
+    : null;
+
+  const reciprocalRef = !existing.empty
+    ? existing.docs[0].ref
+    : byEmail && !byEmail.empty
+      ? byEmail.docs[0].ref
+      : db.collection(`users/${uid}/familyMembers`).doc();
+
+  // Deliberately not counted against the accepter's plan limit: the invitation
+  // has already been accepted by this point, and refusing here would leave a
+  // half-formed link with no way for them to resolve it.
+  batch.set(
+    reciprocalRef,
+    {
+      name: (inviter?.fullName as string) || invite.inviterName || "Family member",
+      email: inviterEmail,
+      phone: null,
+      relationship: null,
+      avatarUrl: null,
+      isActive: true,
+      linkStatus: "linked",
+      linkedUid: inviterUid,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
   // Mark the inviter's roster entry as a real linked account.
   batch.update(db.doc(`users/${inviterUid}/familyMembers/${invite.memberId}`), {
     linkStatus: "linked",

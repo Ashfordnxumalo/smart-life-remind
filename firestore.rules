@@ -35,8 +35,20 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(
           ['fullName', 'email', 'avatarUrl', 'planType', 'fcmTokens', 'createdAt', 'updatedAt']);
 
+      // assignedUid is set when the assigned member is a linked account. It is
+      // what lets that person see the task at all — following assignedMemberId
+      // to the member document would cost a get() on every read.
       match /reminders/{id} {
-        allow read, update, delete: if isOwner(uid);
+        allow read: if isOwner(uid) || resource.data.assignedUid == request.auth.uid;
+
+        // The assignee can tick their task off and nothing else. Anything
+        // wider would let them rewrite the owner's reminder.
+        allow update: if isOwner(uid)
+          || (resource.data.assignedUid == request.auth.uid
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['completed', 'completedAt', 'updatedAt']));
+
+        allow delete: if isOwner(uid);
         allow create: if isOwner(uid)
           && request.resource.data.keys().hasAll(['title', 'category', 'priority', 'dueDate']);
       }

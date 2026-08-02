@@ -136,6 +136,8 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
       return;
     }
 
+    const memberId = assignedMember === "self" ? null : assignedMember || null;
+
     setSubmitting(true);
     try {
       await create({
@@ -145,7 +147,10 @@ export const AddReminderDialog = ({ trigger, preSelectedCategory, isOpen: extern
         description: notes,
         dueDate: format(date, 'yyyy-MM-dd'),
         dueTime: isAllDay ? null : time,
-        assignedMemberId: assignedMember === "self" ? null : assignedMember || null,
+        assignedMemberId: memberId,
+        // Only set when the member is a linked account — this is what lets
+        // them see the task from their own dashboard.
+        assignedUid: familyMembers.find((m) => m.id === memberId)?.linkedUid ?? null,
         notificationPreferences,
         reminderLocation: location?.address || null,
         locationLat: location?.latitude ?? null,

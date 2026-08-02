@@ -155,6 +155,7 @@ export const useGeolocation = () => {
             locationLat: (data.locationLat as number) ?? null,
             locationLng: (data.locationLng as number) ?? null,
             locationRadius: (data.locationRadius as number) ?? 500,
+            assignedUid: (data.assignedUid as string) ?? null,
             notificationPreferences: sanitizeNotificationPreferences(data.notificationPreferences),
             createdAt: toISO(data.createdAt) ?? "",
             updatedAt: toISO(data.updatedAt) ?? "",
