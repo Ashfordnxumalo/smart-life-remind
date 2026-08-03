@@ -11,11 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import {
-  PROVIDER_CATEGORIES,
-  type NewServiceProvider,
-  type ProviderReference,
-  type ServiceProvider,
+import { CategoryCombobox } from "@/components/CategoryCombobox";
+import type {
+  NewServiceProvider,
+  ProviderReference,
+  ServiceProvider,
 } from "@/types/serviceProvider";
 
 interface ServiceProviderFormDialogProps {
@@ -45,6 +45,7 @@ export const ServiceProviderFormDialog = ({
   const [lastServicedOn, setLastServicedOn] = useState("");
   const [nextDueOn, setNextDueOn] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [categoryListOpen, setCategoryListOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,7 +113,14 @@ export const ServiceProviderFormDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent
+        className="max-h-[90vh] max-w-lg overflow-y-auto"
+        // With the category list showing, Escape belongs to it. Radix would
+        // otherwise close the whole form on that keypress and lose the entry.
+        onEscapeKeyDown={(event) => {
+          if (categoryListOpen) event.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{provider ? "Edit provider" : "Add service provider"}</DialogTitle>
         </DialogHeader>
@@ -133,20 +141,12 @@ export const ServiceProviderFormDialog = ({
 
           <div className="space-y-2">
             <Label htmlFor="sp-category">Category</Label>
-            {/* A datalist keeps the common categories one tap away without
-                locking anyone out of typing their own. */}
-            <Input
+            <CategoryCombobox
               id="sp-category"
-              list="sp-category-options"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              autoComplete="off"
+              onChange={setCategory}
+              onListOpenChange={setCategoryListOpen}
             />
-            <datalist id="sp-category-options">
-              {PROVIDER_CATEGORIES.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
